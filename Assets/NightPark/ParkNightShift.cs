@@ -369,9 +369,21 @@ public sealed class ParkNightShift : MonoBehaviour
         postNight.Begin(player, this);
     }
 
-    public void StartSecondNight()
+    public void StartPendingWalk()
     {
-        if (IsPostNight && postNight.Finished) LoadNight(2);
+        if (loading) return;
+        loading = true;
+        ResumeWalk(ParkProgress.PendingWalk);
+    }
+
+    public static void ResumeWalk(int day)
+    {
+        Time.timeScale = 1;
+        Terry.MiniGames.MiniGameModule.LoadAfterDay(day, () =>
+        {
+            ParkProgress.CompleteWalk(day);
+            StartFromMenu(day + 1);
+        });
     }
 
     private void LoadNight(int number)
@@ -438,9 +450,10 @@ public sealed class ParkNightShift : MonoBehaviour
                         LoadNight(Number);
                 }
                 else if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 88, 220, 48),
-                    Number == 1 ? "К камере у хоздвора" : Number < LastNight ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
+                    Number == 1 ? "К камере у хоздвора" : ParkProgress.PendingWalk == Number ? "Продолжить" : Number < LastNight ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
                 {
                     if (Number == 1) BeginPostNight();
+                    else if (ParkProgress.PendingWalk == Number) StartPendingWalk();
                     else if (Number < LastNight) LoadNight(Number + 1);
                     else selectingNight = true;
                 }

@@ -157,7 +157,8 @@ public sealed class ParkMainMenu : MonoBehaviour
             yield return null;
         }
         fade = 1;
-        ParkNightShift.StartFromMenu(number);
+        if (ParkProgress.PendingWalk != 0) ParkNightShift.ResumeWalk(ParkProgress.PendingWalk);
+        else ParkNightShift.StartFromMenu(number);
     }
 
     public void QuitGame()
@@ -322,6 +323,7 @@ public sealed class ParkMainMenu : MonoBehaviour
             if (Row(row, labels[i], enabled, selected == i && enabled)) ActivateItem(i);
         }
         string progress = !ContinueAvailable ? "Продолжение откроется после первой ночи" :
+            ParkProgress.PendingWalk != 0 ? $"Сохранено: прогулка после дня {ParkProgress.PendingWalk}" :
             ParkPostNight.HasUnfinishedSegment ? "Сохранено: после первой ночи" : $"Сохранено: ночь {ParkProgress.ContinueNight}";
         GUI.Label(new Rect(91, 548, 450, 40), progress, small);
     }

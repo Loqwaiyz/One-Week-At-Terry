@@ -7,6 +7,9 @@ public static class ParkProgress
     private const string CompletedKey = "Terry.Progress.CompletedNight.v1";
     private const string ContinueKey = "Terry.Progress.ContinueNight.v1";
 
+    private const string WalkKey = "Terry.Progress.PendingWalk.v1";
+    public static int PendingWalk => PlayerPrefs.GetInt(WalkKey, 0);
+
     // Recognise saves created before the main menu was introduced.
     public static int CompletedNight => Mathf.Max(PlayerPrefs.GetInt(CompletedKey, 0),
         ParkPostNight.HasUnfinishedSegment || ParkPostNight.SegmentCompleted ? 1 : 0);
@@ -24,18 +27,28 @@ public static class ParkProgress
     public static void RecordVictory(int number)
     {
         PlayerPrefs.SetInt(CompletedKey, Mathf.Max(CompletedNight, number));
+        if (number > 1 && Terry.MiniGames.MiniGameModule.HasGame(number)) PlayerPrefs.SetInt(WalkKey, number);
         PlayerPrefs.SetInt(ContinueKey, number == 1 ? 1 : Mathf.Min(7, number + 1));
         PlayerPrefs.Save();
     }
 
     public static void CompleteFirstPostNight()
     {
+        PlayerPrefs.SetInt(WalkKey, 1);
         PlayerPrefs.SetInt(ContinueKey, 2);
+        PlayerPrefs.Save();
+    }
+
+    public static void CompleteWalk(int day)
+    {
+        PlayerPrefs.DeleteKey(WalkKey);
+        PlayerPrefs.SetInt(ContinueKey, day + 1);
         PlayerPrefs.Save();
     }
 
     public static void NewGame()
     {
+        PlayerPrefs.DeleteKey(WalkKey);
         PlayerPrefs.DeleteKey(CompletedKey);
         PlayerPrefs.DeleteKey(ContinueKey);
         ParkPostNight.ResetProgress();

@@ -199,12 +199,13 @@ public sealed class ParkPostNight : MonoBehaviour
         Transform seat = player.PostSeat(0);
         yield return player.DirectView(seat.position + seat.forward * .4f,
             seat.position + seat.forward * 12, 2);
-        Save(5);
+        PlayerPrefs.SetInt(ProgressKey, 5);
         ParkProgress.CompleteFirstPostNight();
         CurrentStep = Step.Complete;
         player.ObjectivePost = -1;
         player.enabled = false;
         Busy = false;
+        night.StartPendingWalk();
     }
 
     private void OnDestroy()
@@ -219,7 +220,7 @@ public sealed class ParkPostNight : MonoBehaviour
 
     public void DrawOverlay()
     {
-        if (!Active) return;
+        if (!Active || Finished) return;
         if (heading == null)
         {
             heading = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, wordWrap = true };
@@ -233,46 +234,34 @@ public sealed class ParkPostNight : MonoBehaviour
         float scale = Mathf.Min(Screen.width / 1150f, Screen.height / 650f);
         GUI.matrix = Matrix4x4.Scale(Vector3.one * scale);
         float width = Screen.width / scale, height = Screen.height / scale;
-        if (Finished)
+        float top = player.TabletOpen ? height - 194 : 16;
+        Fill(new Rect(16, top, 560, 126), Panel);
+        Fill(new Rect(16, top, 4, 126), Accent);
+        GUI.Label(new Rect(32, top + 9, 520, 24), "ПОСЛЕ ПЕРВОЙ НОЧИ · 06:00 · ПРОГРЕСС СОХРАНЯЕТСЯ", caption);
+        string title = CurrentStep == Step.ReturnToEntrance ? "Вернуться к центральному входу" :
+            CurrentStep == Step.VerifyFeed ? "Проверить канал 13 на планшете" :
+            CurrentStep == Step.TuneTransmitter ? "Настроить передатчик" :
+            CurrentStep == Step.ConnectPower ? "Подключить питание камеры" : "Добраться до хозяйственного двора";
+        GUI.Label(new Rect(32, top + 36, 520, 36), title, heading);
+        string hint = CurrentStep == Step.ReturnToEntrance ? "Сигнал устойчив. Можно уходить из парка." :
+            CurrentStep == Step.VerifyFeed ? "Открой камеры и наблюдай канал 13 в течение 2 секунд." :
+            CurrentStep == Step.ReachCamera ? "Карту открывает M. Моя последняя камера так и осталась без связи." :
+            player.CurrentPost != yard ? "Передатчик у хозяйственного двора. Открой карту [M]." :
+            "Оборудование передо мной. Сначала питание, затем проверка связи.";
+        GUI.Label(new Rect(32, top + 76, 520, 42), hint, body);
+        if (Busy)
         {
-            Fill(new Rect(0, 0, width, height), Panel);
-            GUI.Label(new Rect(width / 2 - 260, height / 2 - 110, 520, 40), "ПЕРВОЕ РАССЛЕДОВАНИЕ · УТРО", caption);
-            GUI.Label(new Rect(width / 2 - 260, height / 2 - 65, 520, 60), "Камера 13 подключена", heading);
-            GUI.Label(new Rect(width / 2 - 260, height / 2, 520, 80), "Я выбрался. Но запись с хозяйственного двора ещё предстоит изучить.\nПри следующем визите этот участок будет под наблюдением.", body);
-            if (GUI.Button(new Rect(width / 2 - 160, height / 2 + 105, 320, 48), "Вернуться в парк · ночь 2", button)) night.StartSecondNight();
-            if (GUI.Button(new Rect(width / 2 - 160, height / 2 + 165, 320, 42), "Главное меню", button)) ParkNightShift.ReturnToMenu();
+            Fill(new Rect(0, 0, width, 12), Panel);
+            Fill(new Rect(0, height - 54, width, 54), Panel);
+            GUI.Label(new Rect(width / 2 - 300, height - 44, 600, 34), shotCaption, body);
+            Fill(new Rect(0, height - 3, width * Mathf.Clamp01((Time.unscaledTime - shotStarted) / shotDuration), 3), Accent);
         }
-        else
+        else if (!player.IsRunning && !player.TabletOpen && !player.MapOpen)
         {
-            float top = player.TabletOpen ? height - 194 : 16;
-            Fill(new Rect(16, top, 560, 126), Panel);
-            Fill(new Rect(16, top, 4, 126), Accent);
-            GUI.Label(new Rect(32, top + 9, 520, 24), "ПОСЛЕ ПЕРВОЙ НОЧИ · 06:00 · ПРОГРЕСС СОХРАНЯЕТСЯ", caption);
-            string title = CurrentStep == Step.ReturnToEntrance ? "Вернуться к центральному входу" :
-                CurrentStep == Step.VerifyFeed ? "Проверить канал 13 на планшете" :
-                CurrentStep == Step.TuneTransmitter ? "Настроить передатчик" :
-                CurrentStep == Step.ConnectPower ? "Подключить питание камеры" : "Добраться до хозяйственного двора";
-            GUI.Label(new Rect(32, top + 36, 520, 36), title, heading);
-            string hint = CurrentStep == Step.ReturnToEntrance ? "Сигнал устойчив. Можно уходить из парка." :
-                CurrentStep == Step.VerifyFeed ? "Открой камеры и наблюдай канал 13 в течение 2 секунд." :
-                CurrentStep == Step.ReachCamera ? "Карту открывает M. Моя последняя камера так и осталась без связи." :
-                player.CurrentPost != yard ? "Передатчик у хозяйственного двора. Открой карту [M]." :
-                "Оборудование передо мной. Сначала питание, затем проверка связи.";
-            GUI.Label(new Rect(32, top + 76, 520, 42), hint, body);
-            if (Busy)
-            {
-                Fill(new Rect(0, 0, width, 12), Panel);
-                Fill(new Rect(0, height - 54, width, 54), Panel);
-                GUI.Label(new Rect(width / 2 - 300, height - 44, 600, 34), shotCaption, body);
-                Fill(new Rect(0, height - 3, width * Mathf.Clamp01((Time.unscaledTime - shotStarted) / shotDuration), 3), Accent);
-            }
-            else if (!player.IsRunning && !player.TabletOpen && !player.MapOpen)
-            {
-                Rect action = new Rect(width / 2 - 180, height - 112, 360, 44);
-                if (CanInteract(Step.ConnectPower) && GUI.Button(action, "Подключить питание", button)) ConnectPower();
-                else if (CanInteract(Step.TuneTransmitter) && GUI.Button(action, "Настроить передатчик", button)) TuneTransmitter();
-                else if (CurrentStep == Step.ReturnToEntrance && player.CurrentPost == 0 && GUI.Button(action, "Покинуть парк", button)) LeavePark();
-            }
+            Rect action = new Rect(width / 2 - 180, height - 112, 360, 44);
+            if (CanInteract(Step.ConnectPower) && GUI.Button(action, "Подключить питание", button)) ConnectPower();
+            else if (CanInteract(Step.TuneTransmitter) && GUI.Button(action, "Настроить передатчик", button)) TuneTransmitter();
+            else if (CurrentStep == Step.ReturnToEntrance && player.CurrentPost == 0 && GUI.Button(action, "Покинуть парк", button)) LeavePark();
         }
         GUI.depth = previousDepth;
         GUI.matrix = previous;

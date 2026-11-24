@@ -1,14 +1,26 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Terry.MiniGames
 {
     public static class MiniGameModule
     {
+        public static bool HasGame(int day) => day >= 1 && day <= 3;
+
+        // Campaign play uses the saved scene, including its prefab overrides.
+        public static void LoadAfterDay(int day, Action onCompleted)
+        {
+            if (!HasGame(day)) throw new ArgumentOutOfRangeException(nameof(day));
+            if (onCompleted == null) throw new ArgumentNullException(nameof(onCompleted));
+            var load = SceneManager.LoadSceneAsync($"Assets/MiniGames/Day{day:00}ParkWalk.unity");
+            load.completed += _ => UnityEngine.Object.FindFirstObjectByType<ParkWalk>().OnCompleted = onCompleted;
+        }
+
         // The day controller owns the transition and suspends its own controls.
         public static ParkWalk PlayAfterDay(int day, Action onCompleted)
         {
-            if (day < 1 || day > 3)
+            if (!HasGame(day))
                 throw new ArgumentOutOfRangeException(nameof(day), day, "Для этого дня нет мини-игры.");
             if (onCompleted == null)
                 throw new ArgumentNullException(nameof(onCompleted));
