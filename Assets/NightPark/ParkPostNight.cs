@@ -32,6 +32,7 @@ public sealed class ParkPostNight : MonoBehaviour
     private static readonly Color Accent = new Color32(115, 205, 187, 255);
 
     public static void MarkPending() => Save(1);
+    public static void ResetProgress() => PlayerPrefs.DeleteKey(ProgressKey);
     private static void Save(int checkpoint)
     {
         PlayerPrefs.SetInt(ProgressKey, checkpoint);
@@ -199,6 +200,7 @@ public sealed class ParkPostNight : MonoBehaviour
         yield return player.DirectView(seat.position + seat.forward * .4f,
             seat.position + seat.forward * 12, 2);
         Save(5);
+        ParkProgress.CompleteFirstPostNight();
         CurrentStep = Step.Complete;
         player.ObjectivePost = -1;
         player.enabled = false;
@@ -238,6 +240,7 @@ public sealed class ParkPostNight : MonoBehaviour
             GUI.Label(new Rect(width / 2 - 260, height / 2 - 65, 520, 60), "Камера 13 подключена", heading);
             GUI.Label(new Rect(width / 2 - 260, height / 2, 520, 80), "Я выбрался. Но запись с хозяйственного двора ещё предстоит изучить.\nПри следующем визите этот участок будет под наблюдением.", body);
             if (GUI.Button(new Rect(width / 2 - 160, height / 2 + 105, 320, 48), "Вернуться в парк · ночь 2", button)) night.StartSecondNight();
+            if (GUI.Button(new Rect(width / 2 - 160, height / 2 + 165, 320, 42), "Главное меню", button)) ParkNightShift.ReturnToMenu();
         }
         else
         {

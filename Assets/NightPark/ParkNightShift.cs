@@ -42,6 +42,19 @@ public sealed class ParkNightShift : MonoBehaviour
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetSelection() => nextNight = 1;
+
+    public static void StartFromMenu(int number)
+    {
+        nextNight = Mathf.Clamp(number, 1, LastNight);
+        Time.timeScale = 1;
+        SceneManager.LoadSceneAsync(ParkProgress.GameScene);
+    }
+
+    public static void ReturnToMenu()
+    {
+        Time.timeScale = 1;
+        SceneManager.LoadSceneAsync(ParkProgress.MenuScene);
+    }
     private int terryPost = -1, larryPost = -1;
     private double NightTime => Time.unscaledTimeAsDouble - startTime;
     public bool IsBroken(int channel) => !IsPostNight && rules != null && rules.IsBroken(channel);
@@ -59,6 +72,7 @@ public sealed class ParkNightShift : MonoBehaviour
         player = GetComponent<ParkRunController>();
         Number = nextNight;
         nextNight = 1;
+        ParkProgress.RecordStarted(Number);
         rules = player.CreateNight(Number);
         terry = player.CreateMascot(ParkMascot.Terry);
         larry = player.CreateMascot(ParkMascot.Larry);
@@ -335,6 +349,7 @@ public sealed class ParkNightShift : MonoBehaviour
         if (!caught) Hour = 6;
         beam.enabled = false;
         player.enabled = false;
+        if (!caught) ParkProgress.RecordVictory(Number);
         if (!caught && Number == 1) ParkPostNight.MarkPending();
     }
 
@@ -394,6 +409,7 @@ public sealed class ParkNightShift : MonoBehaviour
             GUI.color = new Color32(12, 22, 30, 255);
             GUI.DrawTexture(new Rect(0, 0, width, height), Texture2D.whiteTexture);
             GUI.color = previousColor;
+            if (GUI.Button(new Rect(width / 2 - 110, height - 58, 220, 38), "Главное меню")) ReturnToMenu();
             if (victoryTitle == null)
             {
                 victoryTime = new GUIStyle(GUI.skin.label) { fontSize = 72, alignment = TextAnchor.MiddleCenter };
