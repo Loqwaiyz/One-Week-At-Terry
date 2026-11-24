@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 730871f71c9c4f1e974d7f94a6dfb05f
+AudioImporter:
+  serializedVersion: 8
+  defaultSettings:
+    serializedVersion: 2
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 22050
+    compressionFormat: 0
+    quality: 1
+    conversionMode: 0
+  forceToMono: 0
+  normalize: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

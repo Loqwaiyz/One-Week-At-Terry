@@ -8,7 +8,7 @@ namespace Terry.MiniGames
         // The day controller owns the transition and suspends its own controls.
         public static ParkWalk PlayAfterDay(int day, Action onCompleted)
         {
-            if (day != 1 && day != 2)
+            if (day < 1 || day > 3)
                 throw new ArgumentOutOfRangeException(nameof(day), day, "Для этого дня нет мини-игры.");
             if (onCompleted == null)
                 throw new ArgumentNullException(nameof(onCompleted));
