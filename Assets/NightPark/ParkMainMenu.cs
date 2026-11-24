@@ -14,7 +14,17 @@ public sealed class ParkMainMenu : MonoBehaviour
     public bool TerryVisible => mascot && mascot.gameObject.activeSelf;
     public bool ContinueAvailable => ParkProgress.CanContinue;
 
+    private const string DefaultCaption = "НЕ ВСЁ В ПАРКЕ ОСТАЁТСЯ НА СВОИХ МЕСТАХ";
+    private static readonly string[] SecretCaptions = {
+        "тише-тише", "ай ай ааааай", "быстрее, чернь", "67", "Вывести главную гипотезу игрового проекта"
+    };
+    private string homeCaption = DefaultCaption;
+    private bool missingTerry, silentPortrait;
+    private GUIStyle errorSubtitle;
     private Transform mascot;
+    private ParkScareView scarePreview;
+    private AudioSource previewAudio;
+    private AudioClip previewScream;
     private Light overhead, rim;
     private GameObject fixture;
     private AudioSource ambience, effects;
@@ -33,7 +43,7 @@ public sealed class ParkMainMenu : MonoBehaviour
     private static readonly Color Amber = new Color32(238, 170, 99, 255);
     private static readonly string[] Names = { "ТЕРРИ", "ЛАРРИ", "УМИ", "КЕША", "САВЕЛИЙ", "КЛЫК", "ГОД" };
     private static readonly ParkMascot[] Kinds = { ParkMascot.Terry, ParkMascot.Larry, ParkMascot.Umi, ParkMascot.Kesha, ParkMascot.Falcon, ParkMascot.Wolf, ParkMascot.Elephant };
-    private static readonly int[] UnlockNight = { 1, 1, 2, 3, 5, 5, 7 };
+    private static readonly int[] UnlockNight = { 1, 1, 2, 3, 5, 7, 7 };
     private static readonly string[] Notes = {
         "Символ парка. Его положение можно определить по камерам.\nКогда он рядом — меняй локацию.",
         "После его визита камеры теряют сигнал.\nДождись ухода Ларри, прежде чем начинать ремонт.",
@@ -52,6 +62,14 @@ public sealed class ParkMainMenu : MonoBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         ParkOptions.Apply();
+        // One roll per menu scene, including returns from a night.
+        int roll = Random.Range(0, 600);
+        if (roll < SecretCaptions.Length) homeCaption = SecretCaptions[roll];
+        else if (roll == SecretCaptions.Length)
+        {
+            missingTerry = true;
+            homeCaption = "ОШИБКА 404: ОБЪЕКТ «ТЕРРИ» НЕ НАЙДЕН";
+        }
         CreateTextures();
         ShowMascot(0);
         CreateLighting();
@@ -64,6 +82,8 @@ public sealed class ParkMainMenu : MonoBehaviour
         effects = gameObject.AddComponent<AudioSource>();
         effects.volume = .18f;
         crackle = MakeSound(true);
+        previewAudio = gameObject.AddComponent<AudioSource>();
+        previewAudio.playOnAwake = false;
         nextFlicker = Time.unscaledTime + Random.Range(4, 7);
     }
 
@@ -109,13 +129,20 @@ public sealed class ParkMainMenu : MonoBehaviour
         mascot = ParkMascots.Create(Kinds[index], mascotMaterial);
         mascot.position = mascotPosition;
         mascot.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(transform.position - mascotPosition, Vector3.up));
-        if (Kinds[index] == ParkMascot.Elephant) mascot.position += Vector3.up * 1.4f;
-        if (Kinds[index] == ParkMascot.Falcon) mascot.position += Vector3.up * 1.7f;
-        foreach (var renderer in mascot.GetComponentsInChildren<Renderer>())
+        var parts = mascot.GetComponentsInChildren<Renderer>();
+        float bottom = float.PositiveInfinity;
+        foreach (var part in parts) bottom = Mathf.Min(bottom, part.bounds.min.y);
+        float hover = Kinds[index] == ParkMascot.Falcon ? .85f : 0f;
+        float floor = mascotPosition.y;
+        if (Physics.Raycast(mascotPosition + Vector3.up * .65f, Vector3.down, out RaycastHit hit, 2f,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) floor = hit.point.y;
+        mascot.position += Vector3.up * (floor + hover - bottom);
+        foreach (var renderer in parts)
         {
             renderer.gameObject.layer = 0;
             renderer.shadowCastingMode = ShadowCastingMode.On;
         }
+        if (missingTerry && CurrentPage != Page.Extra) mascot.gameObject.SetActive(false);
         flickerStarted = -10;
     }
 
@@ -123,6 +150,7 @@ public sealed class ParkMainMenu : MonoBehaviour
     {
         if (Loading) return;
         PlayerPrefs.Save();
+        StopPreview();
         CurrentPage = page;
         if (page == Page.Home) { selected = 0; ShowMascot(0); }
         else if (page == Page.Extra) { extraIndex = 0; ShowMascot(0); }
@@ -151,13 +179,36 @@ public sealed class ParkMainMenu : MonoBehaviour
     private IEnumerator Launch(int number)
     {
         Loading = true;
+        if (missingTerry)
+        {
+            silentPortrait = true;
+            ambience.Stop();
+            effects.Stop();
+            previewAudio.Stop();
+            mascot.gameObject.SetActive(true);
+            const int portraitLayer = 29;
+            foreach (var part in mascot.GetComponentsInChildren<Renderer>())
+                part.gameObject.layer = portraitLayer;
+            var camera = GetComponent<Camera>();
+            camera.cullingMask = 1 << portraitLayer;
+            var hd = GetComponent<HDAdditionalCameraData>();
+            hd.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
+            hd.backgroundColorHDR = Color.black;
+            transform.LookAt(mascot.position + Vector3.up * 1.7f);
+            overhead.intensity = 1900;
+            rim.enabled = true;
+            yield return new WaitForSecondsRealtime(2f);
+            ParkNightShift.StartFromMenu(number);
+            yield break;
+        }
         for (float t = 0; t < .45f; t += Time.unscaledDeltaTime)
         {
             fade = Mathf.Clamp01(t / .45f);
             yield return null;
         }
         fade = 1;
-        ParkNightShift.StartFromMenu(number);
+        if (ParkProgress.PendingWalk != 0) ParkNightShift.ResumeWalk(ParkProgress.PendingWalk);
+        else ParkNightShift.StartFromMenu(number);
     }
 
     public void QuitGame()
@@ -172,6 +223,13 @@ public sealed class ParkMainMenu : MonoBehaviour
 
     private void Update()
     {
+        if (silentPortrait) return;
+        if (scarePreview != null)
+        {
+            if (!scarePreview.Active || Input.GetKeyDown(KeyCode.Escape)) StopPreview();
+            else scarePreview.Animate();
+            return;
+        }
         float now = Time.unscaledTime;
         if (!Loading) fade = Mathf.MoveTowards(fade, 0, Time.unscaledDeltaTime * 1.8f);
         if (Input.GetKeyDown(KeyCode.Escape) && CurrentPage != Page.Home) OpenPage(Page.Home);
@@ -183,9 +241,11 @@ public sealed class ParkMainMenu : MonoBehaviour
         }
         if (!Loading && CurrentPage == Page.Extra)
         {
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) PlayPreview();
             if (Input.GetKeyDown(KeyCode.LeftArrow)) SelectExtra(-1);
             if (Input.GetKeyDown(KeyCode.RightArrow)) SelectExtra(1);
         }
+        if (silentPortrait) return;
         bool atmosphere = ParkOptions.Atmosphere && CurrentPage == Page.Home;
         transform.position = cameraOrigin + new Vector3(Mathf.Sin(now * .19f) * .035f, Mathf.Sin(now * .27f) * .018f, 0);
         transform.rotation = cameraRotation * Quaternion.Euler(Mathf.Sin(now * .17f) * .12f, Mathf.Sin(now * .21f) * .2f, 0);
@@ -199,7 +259,7 @@ public sealed class ParkMainMenu : MonoBehaviour
         float elapsed = now - flickerStarted;
         bool blackout = atmosphere && elapsed < .65f && (elapsed < .2f || elapsed > .4f);
         overhead.intensity = blackout ? 5 : 1900 * (.96f + .04f * Mathf.PerlinNoise(now * 1.8f, 0));
-        bool visible = !(atmosphere && disappear && elapsed < 1.35f);
+        bool visible = (!missingTerry || CurrentPage == Page.Extra) && !(atmosphere && disappear && elapsed < 1.35f);
         if (CurrentPage == Page.Extra && ParkProgress.CompletedNight < UnlockNight[extraIndex]) visible = false;
         mascot.gameObject.SetActive(visible);
         rim.enabled = !blackout && visible;
@@ -257,6 +317,7 @@ public sealed class ParkMainMenu : MonoBehaviour
         { fontSize = size, fontStyle = weight, wordWrap = true, normal = { textColor = color } };
         title = Text(66, Paper, FontStyle.Bold);
         subtitle = Text(14, Amber);
+        errorSubtitle = Text(14, new Color32(239, 83, 74, 255));
         item = Text(23, Paper);
         small = Text(14, Muted);
         body = Text(18, Paper);
@@ -287,6 +348,12 @@ public sealed class ParkMainMenu : MonoBehaviour
 
     private void OnGUI()
     {
+        if (silentPortrait) return;
+        if (scarePreview != null)
+        {
+            scarePreview.Draw(new Rect(0, 0, Screen.width, Screen.height));
+            return;
+        }
         Styles();
         Matrix4x4 previous = GUI.matrix;
         float scale = Mathf.Min(Screen.width / 1150f, Screen.height / 650f);
@@ -303,7 +370,7 @@ public sealed class ParkMainMenu : MonoBehaviour
         else DrawNewGameConfirmation();
         GUI.Label(new Rect(72, height - 42, 620, 26), CurrentPage == Page.Home ?
             "↑ ↓  выбор     ENTER  подтвердить" : CurrentPage == Page.Extra ?
-            "← →  записи     ESC  главное меню" : "ESC  главное меню · настройки сохраняются", small);
+            (Kinds[extraIndex] == ParkMascot.Larry ? "← →  записи     ESC  главное меню" : "← →  записи     ENTER  скример     ESC  главное меню") : "ESC  главное меню · настройки сохраняются", small);
         GUI.Label(new Rect(width - 225, height - 42, 210, 26), TerryVisible ? "СИГНАЛ УСТОЙЧИВ" : "ОБЪЕКТ НЕ ОБНАРУЖЕН", small);
         if (fade > 0) Fill(new Rect(0, 0, width, height), new Color(Ink.r, Ink.g, Ink.b, fade));
         GUI.matrix = previous;
@@ -312,7 +379,7 @@ public sealed class ParkMainMenu : MonoBehaviour
     private void DrawHome(float height)
     {
         GUI.Label(new Rect(72, 86, 500, 160), "ONE WEEK\nAT TERRY", title);
-        GUI.Label(new Rect(76, 250, 470, 30), "НЕ ВСЁ В ПАРКЕ ОСТАЁТСЯ НА СВОИХ МЕСТАХ", subtitle);
+        GUI.Label(new Rect(76, 250, 470, 30), homeCaption, missingTerry ? errorSubtitle : subtitle);
         string[] labels = { "Новая игра", "Продолжить", "Настройки", "Экстра", "Выход" };
         for (int i = 0; i < labels.Length; i++)
         {
@@ -322,6 +389,7 @@ public sealed class ParkMainMenu : MonoBehaviour
             if (Row(row, labels[i], enabled, selected == i && enabled)) ActivateItem(i);
         }
         string progress = !ContinueAvailable ? "Продолжение откроется после первой ночи" :
+            ParkProgress.PendingWalk != 0 ? $"Сохранено: прогулка после дня {ParkProgress.PendingWalk}" :
             ParkPostNight.HasUnfinishedSegment ? "Сохранено: после первой ночи" : $"Сохранено: ночь {ParkProgress.ContinueNight}";
         GUI.Label(new Rect(91, 548, 450, 40), progress, small);
     }
@@ -351,10 +419,29 @@ public sealed class ParkMainMenu : MonoBehaviour
         GUI.Label(new Rect(76, 181, 380, 45), unlocked ? Names[extraIndex] : "НЕИЗВЕСТНЫЙ ОБЪЕКТ", item);
         GUI.Label(new Rect(76, 245, 410, 160), unlocked ? Notes[extraIndex] :
             "Материалы ещё не найдены.\n\nЗаверши соответствующую ночь, чтобы открыть запись расследования.", body);
+        if (Kinds[extraIndex] != ParkMascot.Larry && Row(new Rect(72, 354, 355, 44), "Посмотреть скример", unlocked)) PlayPreview();
         if (Row(new Rect(72, 414, 175, 44), "‹  Назад")) SelectExtra(-1);
         if (Row(new Rect(258, 414, 175, 44), "Вперёд  ›")) SelectExtra(1);
         GUI.Label(new Rect(91, 472, 355, 28), $"ЗАПИСЬ {extraIndex + 1:00} / 07", small);
         if (Row(new Rect(72, 524, 355, 44), "‹  Главное меню")) OpenPage(Page.Home);
+    }
+
+    private void PlayPreview()
+    {
+        if (Loading || CurrentPage != Page.Extra || scarePreview != null ||
+            ParkProgress.CompletedNight < UnlockNight[extraIndex]) return;
+        ParkMascot kind = Kinds[extraIndex];
+        if (kind == ParkMascot.Larry) return;
+        scarePreview = new ParkScareView(ParkMascots.Create(kind, mascotMaterial), kind);
+        if (!previewScream) previewScream = Resources.Load<AudioClip>("ParkJumpscare");
+        if (previewScream) previewAudio.PlayOneShot(previewScream, .48f);
+    }
+
+    private void StopPreview()
+    {
+        scarePreview?.Dispose();
+        scarePreview = null;
+        if (previewAudio) previewAudio.Stop();
     }
 
     public void SelectExtra(int direction)
@@ -379,7 +466,11 @@ public sealed class ParkMainMenu : MonoBehaviour
         GUI.color = previous;
     }
 
-    private void OnDisable() => PlayerPrefs.Save();
+    private void OnDisable()
+    {
+        StopPreview();
+        PlayerPrefs.Save();
+    }
 
     private void OnDestroy()
     {

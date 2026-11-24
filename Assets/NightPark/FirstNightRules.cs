@@ -11,6 +11,10 @@ public sealed class FirstNightRules
     public enum ElephantResponse { Hide, Flash, Run }
     public ElephantResponse Response { get; private set; }
     public int ElephantChannel { get; private set; } = -1;
+    public Visitor Approaching { get; private set; }
+    public int ApproachRoom { get; private set; } = -1;
+    private int approachTarget;
+    private double nextApproachStep;
     private int visits;
     private double hiddenSince = -1;
     public Visitor Intruder { get; private set; }
@@ -53,25 +57,41 @@ public sealed class FirstNightRules
         Larry = den;
     }
 
-    private int NextToward(int goal)
+    private int NextToward(int start, int goal)
     {
         var queue = new Queue<int>();
         var step = new int[exits.Length];
         Array.Fill(step, -1);
-        step[Terry] = Terry;
-        queue.Enqueue(Terry);
+        step[start] = start;
+        queue.Enqueue(start);
         while (queue.Count > 0)
         {
             int node = queue.Dequeue();
             foreach (int next in exits[node])
             {
                 if (step[next] != -1) continue;
-                step[next] = node == Terry ? next : step[node];
+                step[next] = node == start ? next : step[node];
                 if (next == goal) return step[next];
                 queue.Enqueue(next);
             }
         }
-        return Terry;
+        return start;
+    }
+
+    public ParkMascot? Occupant(int destination)
+    {
+        if (destination < 0) return null;
+        if (ApproachRoom == destination) return Approaching == Visitor.Wolf ? ParkMascot.Wolf : ParkMascot.Falcon;
+        if (ElephantChannel == destination) return ParkMascot.Elephant;
+        if (IntruderRoom == destination && Intruder != Visitor.None)
+        {
+            if (Intruder == Visitor.Wolf) return ParkMascot.Wolf;
+            return Intruder == Visitor.Falcon ? ParkMascot.Falcon : ParkMascot.Elephant;
+        }
+        if (Terry == destination) return ParkMascot.Terry;
+        if (Umi == destination) return ParkMascot.Umi;
+        if (Kesha == destination) return ParkMascot.Kesha;
+        return null;
     }
 
     public bool CanDepart(double time) => !Caught && (Intruder == Visitor.None || WolfStunned || (Intruder == Visitor.Elephant && Response == ElephantResponse.Run)) && UmiAttackAt < 0 && (AttackAt < 0 || time < AttackAt);
@@ -126,8 +146,8 @@ public sealed class FirstNightRules
             var channels = new List<int>();
             for (int i = 0; i < exits.Length; i++)
             {
-                // At four outages, allow a dead feed only within one run of a repair.
-                if (i != inactiveCamera && (!IsBroken(i) || (damaged.Count >= 4 && CanRepair(i) && (i == room || exits[room].Contains(i)))))
+                // At four outages, allow a dead feed only at the player's current repair site.
+                if (i != inactiveCamera && (!IsBroken(i) || (damaged.Count >= 4 && CanRepair(i) && i == room)))
                     channels.Add(i);
             }
             if (channels.Count == 0) return;
@@ -194,13 +214,62 @@ public sealed class FirstNightRules
         nextTerry = Math.Max(nextTerry, time + 5);
     }
 
+    private bool StartApproach(Visitor kind, int target, double time)
+    {
+        var starts = new List<int>();
+        for (int i = 0; i < exits.Length; i++)
+        {
+            if (i == target || exits[target].Contains(i) || i == inactiveCamera || IsBroken(i)) continue;
+            int step = NextToward(i, target);
+            if (exits[target].Contains(step) && step != inactiveCamera && !IsBroken(step)) starts.Add(i);
+        }
+        if (starts.Count == 0)
+            starts.AddRange(exits[target].FindAll(i => i != inactiveCamera && !IsBroken(i)));
+        if (starts.Count == 0) return false;
+        Approaching = kind;
+        ApproachRoom = starts[random.Next(starts.Count)];
+        approachTarget = target;
+        nextApproachStep = time + 7;
+        return true;
+    }
+
+    private void AdvanceApproach(double time, int room, bool running)
+    {
+        if (time < nextApproachStep) return;
+        int previous = ApproachRoom;
+        if (previous != approachTarget) ApproachRoom = NextToward(previous, approachTarget);
+        nextApproachStep = time + 7;
+        if (!running && room == ApproachRoom)
+        {
+            Intruder = Approaching;
+            IntruderRoom = room;
+            IntruderDeadline = time + (Intruder == Visitor.Wolf ? 9 : 7);
+        }
+        else if (ApproachRoom != approachTarget || previous != approachTarget) return; // Briefly search the empty target.
+        Approaching = Visitor.None;
+        ApproachRoom = -1;
+        if (Intruder == Visitor.None) EndVisit(time);
+    }
+
     private void TickVisit(double time, int room, bool running, bool hidden)
     {
+        if (Approaching != Visitor.None)
+        {
+            AdvanceApproach(time, room, running);
+            return;
+        }
         if (Intruder == Visitor.None)
         {
             if (time < nextVisit || running || Terry == room || AttackAt >= 0 || Kesha >= 0 || Umi >= 0) return;
-            Intruder = night < 7 ? Visitor.Falcon : (visits % 3 == 0 ? Visitor.Wolf :
+            Visitor next = night < 7 ? Visitor.Falcon : (visits % 3 == 0 ? Visitor.Wolf :
                 visits % 3 == 1 ? Visitor.Elephant : Visitor.Falcon);
+            if (next != Visitor.Elephant)
+            {
+                if (StartApproach(next, room, time)) visits++;
+                else nextVisit = time + 7;
+                return;
+            }
+            Intruder = next;
             visits++;
             if (Intruder == Visitor.Elephant)
             {
@@ -247,16 +316,16 @@ public sealed class FirstNightRules
         if (running) Depart();
         if (night >= 5) TickVisit(time, room, running, hidden);
         if (Caught) return;
-        if (Intruder == Visitor.None && night >= 3) TickKesha(time, room, running, hidden, feed);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && night >= 3) TickKesha(time, room, running, hidden, feed);
         if (Caught) return;
-        if (Intruder == Visitor.None && night >= 2 && Kesha < 0) TickUmi(time, room, running, hidden);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && night >= 2 && Kesha < 0) TickUmi(time, room, running, hidden);
         if (Caught) return;
-        if (Intruder == Visitor.None && !running && Kesha < 0 && Umi < 0 && Terry != room && time >= nextTerry)
+        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Kesha < 0 && Umi < 0 && Terry != room && time >= nextTerry)
         {
-            Terry = NextToward(room);
+            Terry = NextToward(Terry, room);
             nextTerry = time + (night >= 6 ? random.Next(9, 15) : Hard ? random.Next(11, 17) : random.Next(16, 22));
         }
-        if (Intruder == Visitor.None && !running && Terry == room && AttackAt < 0) AttackAt = time + (Hard ? 4.5 : 6);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Terry == room && AttackAt < 0) AttackAt = time + (Hard ? 4.5 : 6);
 
         if (guarded >= 0 && time >= leaveAt)
         {

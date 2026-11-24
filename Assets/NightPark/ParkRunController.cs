@@ -62,6 +62,8 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void SelectChannel(int index)
     {
+        if (!liveCamera) night.PlayTabletOpen();
+        else if (channel != index) night.PlayChannelChange();
         CloseTablet();
         channel = index;
         liveCamera = posts[index].surveillance;
@@ -97,9 +99,10 @@ public sealed class ParkRunController : MonoBehaviour
         if (liveCamera.targetTexture != video) liveCamera.targetTexture = video;
     }
 
-    private void CloseTablet()
+    private void CloseTablet(bool playSound = false)
     {
         if (!liveCamera) return;
+        if (playSound) night.PlayTabletClose();
         liveCamera.enabled = false;
         liveCamera.targetTexture = null;
         liveCamera = null;
@@ -118,8 +121,9 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void ToggleMap()
     {
-        CloseTablet();
+        CloseTablet(playSound: true);
         mapOpen = !mapOpen;
+        if (mapOpen) night.PlayMapOpen();
     }
 
     private void OnApplicationFocus(bool focused)
@@ -280,10 +284,11 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void BeginRun(Passage passage)
     {
-        if (IsRunning || IsDirecting || !night.TryDepart()) return;
-        mapOpen = false;
         bool forward = current == passage.first;
-        destination = forward ? passage.second : passage.first;
+        int next = forward ? passage.second : passage.first;
+        if (IsRunning || IsDirecting || !night.TryDepart(next)) return;
+        mapOpen = false;
+        destination = next;
         path.Clear();
         AddPoint(transform.position);
         foreach (Transform step in posts[current].approach) AddPoint(step.position);
@@ -296,6 +301,7 @@ public sealed class ParkRunController : MonoBehaviour
         for (int i = 1; i < path.Count; i++) distance += Vector3.Distance(path[i - 1], path[i]);
         runDuration = Mathf.Clamp(distance / 7.5f, .25f, Mathf.Max(.25f, runSeconds));
         elapsed = 0f;
+        night.PlayRunStep();
         initialRunPitch = Mathf.DeltaAngle(0f, transform.eulerAngles.x);
         yaw = targetYaw = 0f;
         pitch = 0f;
@@ -323,12 +329,16 @@ public sealed class ParkRunController : MonoBehaviour
             return;
         }
 
+        int previousStep = Mathf.FloorToInt(elapsed * 3.4f);
         elapsed += Time.deltaTime;
+        if (Mathf.FloorToInt(elapsed * 3.4f) != previousStep && elapsed < runDuration)
+            night.PlayRunStep();
         float progress = Mathf.Clamp01(elapsed / runDuration);
         Transform seat = posts[destination].seat;
         if (progress >= 1f)
         {
             playerCamera.fieldOfView = restingFov;
+            if (night.CheckEntry(destination)) return;
             current = destination;
             destination = -1;
             transform.SetPositionAndRotation(seat.position, seat.rotation);
@@ -481,7 +491,7 @@ public sealed class ParkRunController : MonoBehaviour
             bool insideCamera = cameraTab.Contains(pointer.mousePosition);
             if (insideCamera && !overCameraTab && !lookingAround)
             {
-                if (liveCamera) CloseTablet();
+                if (liveCamera) CloseTablet(playSound: true);
                 else SelectChannel(channel);
             }
             overCameraTab = insideCamera;
@@ -547,7 +557,7 @@ public sealed class ParkRunController : MonoBehaviour
         {
             Fill(new Rect(0, 0, split, height), new Color32(12, 16, 18, 255));
             GUI.Label(new Rect(split / 2 - 160, height / 2 - 36, 360, 80),
-                night.IsChannelAvailable(channel) ? "Нет сигнала" : "Камера не подключена\nПередатчик у хозяйственного двора", hintStyle);
+                    night.IsChannelAvailable(channel) ? "Нет сигнала" : "Камера не подключена\nПередатчик у хозяйственного двора", hintStyle);
         }
         else GUI.DrawTexture(new Rect(0, 0, split, height), video, ScaleMode.ScaleToFit, false);
         Fill(new Rect(0, 0, split, 48), new Color32(17, 24, 25, 220));
