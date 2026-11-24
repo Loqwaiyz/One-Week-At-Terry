@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 5ffb5315a255443c93f5b6e00f31d2f6
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 8
+  defaultSettings:
+    serializedVersion: 2
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 48000
+    compressionFormat: 1
+    quality: 1
+    conversionMode: 0
+    preloadAudioData: 1
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: Horror scream1 by Vinrax, CC0, edited excerpt. https://opengameart.org/content/horror-scream1
+  assetBundleName:
+  assetBundleVariant:
