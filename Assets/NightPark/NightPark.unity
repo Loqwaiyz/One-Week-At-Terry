@@ -5407,7 +5407,7 @@ GameObject:
   - component: {fileID: 157207113}
   - component: {fileID: 157207115}
   m_Layer: 0
-  m_Name: Sun
+  m_Name: Moonlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5423,8 +5423,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 130000
+  m_Color: {r: 0.56, g: 0.68, b: 1, a: 1}
+  m_Intensity: 18
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -5511,7 +5511,7 @@ MonoBehaviour:
   m_EnableSpotReflector: 0
   m_LightUnit: 2
   m_LuxAtDistance: 1
-  m_Intensity: 130000
+  m_Intensity: 18
   m_Version: 13
   m_ObsoleteShadowResolutionTier: 1
   m_ObsoleteUseShadowQualitySettings: 0
@@ -15701,7 +15701,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 8ba92e2dd7f884a0f88b98fa2d235fe7, type: 2}
+  sharedProfile: {fileID: 11400000, guid: e544c827fd2f4eecb896de299fa58f6b, type: 2}
 --- !u!4 &432432461
 Transform:
   m_ObjectHideFlags: 0
@@ -65325,6 +65325,7 @@ GameObject:
   - component: {fileID: 1823688465}
   - component: {fileID: 1823688468}
   - component: {fileID: 3000000446}
+  - component: {fileID: 3200000001}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -65465,8 +65466,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -72636,7 +72637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 441482e8936e35048a1dffac814e3ef8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Profile: {fileID: 11400000, guid: 8ba92e2dd7f884a0f88b98fa2d235fe7, type: 2}
+  m_Profile: {fileID: 11400000, guid: e544c827fd2f4eecb896de299fa58f6b, type: 2}
   m_StaticLightingSkyUniqueID: 4
   m_StaticLightingCloudsUniqueID: 0
   m_StaticLightingVolumetricClouds: 0
@@ -77360,7 +77361,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000002}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77391,7 +77392,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000004}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77422,7 +77423,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000006}
   m_Layer: 0
-  m_Name: "Касса у ворот"
+  m_Name: "РљР°СЃСЃР° Сѓ РІРѕСЂРѕС‚"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77462,7 +77463,7 @@ GameObject:
   - component: {fileID: 3000000010}
   - component: {fileID: 3000000011}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77570,7 +77571,7 @@ GameObject:
   - component: {fileID: 3000000015}
   - component: {fileID: 3000000016}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77678,7 +77679,7 @@ GameObject:
   - component: {fileID: 3000000020}
   - component: {fileID: 3000000021}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77786,7 +77787,7 @@ GameObject:
   - component: {fileID: 3000000025}
   - component: {fileID: 3000000026}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77894,7 +77895,7 @@ GameObject:
   - component: {fileID: 3000000030}
   - component: {fileID: 3000000031}
   m_Layer: 0
-  m_Name: "Стойка навеса"
+  m_Name: "РЎС‚РѕР№РєР° РЅР°РІРµСЃР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78002,7 +78003,7 @@ GameObject:
   - component: {fileID: 3000000035}
   - component: {fileID: 3000000036}
   m_Layer: 0
-  m_Name: "Козырёк"
+  m_Name: "РљРѕР·С‹СЂС‘Рє"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78107,7 +78108,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000038}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78138,7 +78139,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000040}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78169,7 +78170,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000042}
   m_Layer: 0
-  m_Name: "Место дежурного по станции"
+  m_Name: "РњРµСЃС‚Рѕ РґРµР¶СѓСЂРЅРѕРіРѕ РїРѕ СЃС‚Р°РЅС†РёРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78209,7 +78210,7 @@ GameObject:
   - component: {fileID: 3000000046}
   - component: {fileID: 3000000047}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78317,7 +78318,7 @@ GameObject:
   - component: {fileID: 3000000051}
   - component: {fileID: 3000000052}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78425,7 +78426,7 @@ GameObject:
   - component: {fileID: 3000000056}
   - component: {fileID: 3000000057}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78533,7 +78534,7 @@ GameObject:
   - component: {fileID: 3000000061}
   - component: {fileID: 3000000062}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78641,7 +78642,7 @@ GameObject:
   - component: {fileID: 3000000066}
   - component: {fileID: 3000000067}
   m_Layer: 0
-  m_Name: "Стойка навеса"
+  m_Name: "РЎС‚РѕР№РєР° РЅР°РІРµСЃР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78749,7 +78750,7 @@ GameObject:
   - component: {fileID: 3000000071}
   - component: {fileID: 3000000072}
   m_Layer: 0
-  m_Name: "Козырёк"
+  m_Name: "РљРѕР·С‹СЂС‘Рє"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78854,7 +78855,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000074}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78885,7 +78886,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000076}
   m_Layer: 0
-  m_Name: "Проход у террасы"
+  m_Name: "РџСЂРѕС…РѕРґ Сѓ С‚РµСЂСЂР°СЃС‹"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78916,7 +78917,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000078}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78947,7 +78948,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000080}
   m_Layer: 0
-  m_Name: "Столик на террасе"
+  m_Name: "РЎС‚РѕР»РёРє РЅР° С‚РµСЂСЂР°СЃРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78985,7 +78986,7 @@ GameObject:
   - component: {fileID: 3000000084}
   - component: {fileID: 3000000085}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79093,7 +79094,7 @@ GameObject:
   - component: {fileID: 3000000089}
   - component: {fileID: 3000000090}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79201,7 +79202,7 @@ GameObject:
   - component: {fileID: 3000000094}
   - component: {fileID: 3000000095}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79309,7 +79310,7 @@ GameObject:
   - component: {fileID: 3000000099}
   - component: {fileID: 3000000100}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79414,7 +79415,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000102}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79445,7 +79446,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000104}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79476,7 +79477,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000106}
   m_Layer: 0
-  m_Name: "Пульт карусели"
+  m_Name: "РџСѓР»СЊС‚ РєР°СЂСѓСЃРµР»Рё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79517,7 +79518,7 @@ GameObject:
   - component: {fileID: 3000000110}
   - component: {fileID: 3000000111}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79625,7 +79626,7 @@ GameObject:
   - component: {fileID: 3000000115}
   - component: {fileID: 3000000116}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79733,7 +79734,7 @@ GameObject:
   - component: {fileID: 3000000120}
   - component: {fileID: 3000000121}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79841,7 +79842,7 @@ GameObject:
   - component: {fileID: 3000000125}
   - component: {fileID: 3000000126}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79949,7 +79950,7 @@ GameObject:
   - component: {fileID: 3000000130}
   - component: {fileID: 3000000131}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80057,7 +80058,7 @@ GameObject:
   - component: {fileID: 3000000135}
   - component: {fileID: 3000000136}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80165,7 +80166,7 @@ GameObject:
   - component: {fileID: 3000000140}
   - component: {fileID: 3000000141}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80270,7 +80271,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000143}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80301,7 +80302,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000145}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80332,7 +80333,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000147}
   m_Layer: 0
-  m_Name: "Столик у палаток"
+  m_Name: "РЎС‚РѕР»РёРє Сѓ РїР°Р»Р°С‚РѕРє"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80370,7 +80371,7 @@ GameObject:
   - component: {fileID: 3000000151}
   - component: {fileID: 3000000152}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80478,7 +80479,7 @@ GameObject:
   - component: {fileID: 3000000156}
   - component: {fileID: 3000000157}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80586,7 +80587,7 @@ GameObject:
   - component: {fileID: 3000000161}
   - component: {fileID: 3000000162}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80694,7 +80695,7 @@ GameObject:
   - component: {fileID: 3000000166}
   - component: {fileID: 3000000167}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80799,7 +80800,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000169}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80830,7 +80831,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000171}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80861,7 +80862,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000173}
   m_Layer: 0
-  m_Name: "Пульт автодрома"
+  m_Name: "РџСѓР»СЊС‚ Р°РІС‚РѕРґСЂРѕРјР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80902,7 +80903,7 @@ GameObject:
   - component: {fileID: 3000000177}
   - component: {fileID: 3000000178}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81010,7 +81011,7 @@ GameObject:
   - component: {fileID: 3000000182}
   - component: {fileID: 3000000183}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81118,7 +81119,7 @@ GameObject:
   - component: {fileID: 3000000187}
   - component: {fileID: 3000000188}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81226,7 +81227,7 @@ GameObject:
   - component: {fileID: 3000000192}
   - component: {fileID: 3000000193}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81334,7 +81335,7 @@ GameObject:
   - component: {fileID: 3000000197}
   - component: {fileID: 3000000198}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81442,7 +81443,7 @@ GameObject:
   - component: {fileID: 3000000202}
   - component: {fileID: 3000000203}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81550,7 +81551,7 @@ GameObject:
   - component: {fileID: 3000000207}
   - component: {fileID: 3000000208}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81655,7 +81656,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000210}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81686,7 +81687,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000212}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81717,7 +81718,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000214}
   m_Layer: 0
-  m_Name: "Скамья у логова"
+  m_Name: "РЎРєР°РјСЊСЏ Сѓ Р»РѕРіРѕРІР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81755,7 +81756,7 @@ GameObject:
   - component: {fileID: 3000000218}
   - component: {fileID: 3000000219}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81863,7 +81864,7 @@ GameObject:
   - component: {fileID: 3000000223}
   - component: {fileID: 3000000224}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81971,7 +81972,7 @@ GameObject:
   - component: {fileID: 3000000228}
   - component: {fileID: 3000000229}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82079,7 +82080,7 @@ GameObject:
   - component: {fileID: 3000000233}
   - component: {fileID: 3000000234}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82184,7 +82185,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000236}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82215,7 +82216,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000238}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82246,7 +82247,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000240}
   m_Layer: 0
-  m_Name: "Место билетёра"
+  m_Name: "РњРµСЃС‚Рѕ Р±РёР»РµС‚С‘СЂР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82286,7 +82287,7 @@ GameObject:
   - component: {fileID: 3000000244}
   - component: {fileID: 3000000245}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82394,7 +82395,7 @@ GameObject:
   - component: {fileID: 3000000249}
   - component: {fileID: 3000000250}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82502,7 +82503,7 @@ GameObject:
   - component: {fileID: 3000000254}
   - component: {fileID: 3000000255}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82610,7 +82611,7 @@ GameObject:
   - component: {fileID: 3000000259}
   - component: {fileID: 3000000260}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82718,7 +82719,7 @@ GameObject:
   - component: {fileID: 3000000264}
   - component: {fileID: 3000000265}
   m_Layer: 0
-  m_Name: "Стойка навеса"
+  m_Name: "РЎС‚РѕР№РєР° РЅР°РІРµСЃР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82826,7 +82827,7 @@ GameObject:
   - component: {fileID: 3000000269}
   - component: {fileID: 3000000270}
   m_Layer: 0
-  m_Name: "Козырёк"
+  m_Name: "РљРѕР·С‹СЂС‘Рє"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82931,7 +82932,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000272}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82962,7 +82963,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000274}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82993,7 +82994,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000276}
   m_Layer: 0
-  m_Name: "Стойка у павильона"
+  m_Name: "РЎС‚РѕР№РєР° Сѓ РїР°РІРёР»СЊРѕРЅР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83031,7 +83032,7 @@ GameObject:
   - component: {fileID: 3000000280}
   - component: {fileID: 3000000281}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83139,7 +83140,7 @@ GameObject:
   - component: {fileID: 3000000285}
   - component: {fileID: 3000000286}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83247,7 +83248,7 @@ GameObject:
   - component: {fileID: 3000000290}
   - component: {fileID: 3000000291}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83355,7 +83356,7 @@ GameObject:
   - component: {fileID: 3000000295}
   - component: {fileID: 3000000296}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83460,7 +83461,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000298}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83491,7 +83492,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000300}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83522,7 +83523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000302}
   m_Layer: 0
-  m_Name: "Пульт посадки"
+  m_Name: "РџСѓР»СЊС‚ РїРѕСЃР°РґРєРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83563,7 +83564,7 @@ GameObject:
   - component: {fileID: 3000000306}
   - component: {fileID: 3000000307}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83671,7 +83672,7 @@ GameObject:
   - component: {fileID: 3000000311}
   - component: {fileID: 3000000312}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83779,7 +83780,7 @@ GameObject:
   - component: {fileID: 3000000316}
   - component: {fileID: 3000000317}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83887,7 +83888,7 @@ GameObject:
   - component: {fileID: 3000000321}
   - component: {fileID: 3000000322}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83995,7 +83996,7 @@ GameObject:
   - component: {fileID: 3000000326}
   - component: {fileID: 3000000327}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84103,7 +84104,7 @@ GameObject:
   - component: {fileID: 3000000331}
   - component: {fileID: 3000000332}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84211,7 +84212,7 @@ GameObject:
   - component: {fileID: 3000000336}
   - component: {fileID: 3000000337}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84316,7 +84317,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000339}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84347,7 +84348,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000341}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84378,7 +84379,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000343}
   m_Layer: 0
-  m_Name: "Пульт колеса"
+  m_Name: "РџСѓР»СЊС‚ РєРѕР»РµСЃР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84419,7 +84420,7 @@ GameObject:
   - component: {fileID: 3000000347}
   - component: {fileID: 3000000348}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84527,7 +84528,7 @@ GameObject:
   - component: {fileID: 3000000352}
   - component: {fileID: 3000000353}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84635,7 +84636,7 @@ GameObject:
   - component: {fileID: 3000000357}
   - component: {fileID: 3000000358}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84743,7 +84744,7 @@ GameObject:
   - component: {fileID: 3000000362}
   - component: {fileID: 3000000363}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84851,7 +84852,7 @@ GameObject:
   - component: {fileID: 3000000367}
   - component: {fileID: 3000000368}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84959,7 +84960,7 @@ GameObject:
   - component: {fileID: 3000000372}
   - component: {fileID: 3000000373}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85067,7 +85068,7 @@ GameObject:
   - component: {fileID: 3000000377}
   - component: {fileID: 3000000378}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85172,7 +85173,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000380}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85203,7 +85204,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000382}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85234,7 +85235,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000384}
   m_Layer: 0
-  m_Name: "Пульт башни"
+  m_Name: "РџСѓР»СЊС‚ Р±Р°С€РЅРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85275,7 +85276,7 @@ GameObject:
   - component: {fileID: 3000000388}
   - component: {fileID: 3000000389}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85383,7 +85384,7 @@ GameObject:
   - component: {fileID: 3000000393}
   - component: {fileID: 3000000394}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85491,7 +85492,7 @@ GameObject:
   - component: {fileID: 3000000398}
   - component: {fileID: 3000000399}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85599,7 +85600,7 @@ GameObject:
   - component: {fileID: 3000000403}
   - component: {fileID: 3000000404}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85707,7 +85708,7 @@ GameObject:
   - component: {fileID: 3000000408}
   - component: {fileID: 3000000409}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85815,7 +85816,7 @@ GameObject:
   - component: {fileID: 3000000413}
   - component: {fileID: 3000000414}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85923,7 +85924,7 @@ GameObject:
   - component: {fileID: 3000000418}
   - component: {fileID: 3000000419}
   m_Layer: 0
-  m_Name: "Кнопка"
+  m_Name: "РљРЅРѕРїРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86028,7 +86029,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000421}
   m_Layer: 0
-  m_Name: "Точка игрока"
+  m_Name: "РўРѕС‡РєР° РёРіСЂРѕРєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86059,7 +86060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000423}
   m_Layer: 0
-  m_Name: "Выход на аллею"
+  m_Name: "Р’С‹С…РѕРґ РЅР° Р°Р»Р»РµСЋ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86090,7 +86091,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000425}
   m_Layer: 0
-  m_Name: "Место у хозяйственного двора"
+  m_Name: "РњРµСЃС‚Рѕ Сѓ С…РѕР·СЏР№СЃС‚РІРµРЅРЅРѕРіРѕ РґРІРѕСЂР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86128,7 +86129,7 @@ GameObject:
   - component: {fileID: 3000000429}
   - component: {fileID: 3000000430}
   m_Layer: 0
-  m_Name: "Сиденье"
+  m_Name: "РЎРёРґРµРЅСЊРµ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86236,7 +86237,7 @@ GameObject:
   - component: {fileID: 3000000434}
   - component: {fileID: 3000000435}
   m_Layer: 0
-  m_Name: "Основание сиденья"
+  m_Name: "РћСЃРЅРѕРІР°РЅРёРµ СЃРёРґРµРЅСЊСЏ"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86344,7 +86345,7 @@ GameObject:
   - component: {fileID: 3000000439}
   - component: {fileID: 3000000440}
   m_Layer: 0
-  m_Name: "Стойка"
+  m_Name: "РЎС‚РѕР№РєР°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86452,7 +86453,7 @@ GameObject:
   - component: {fileID: 3000000444}
   - component: {fileID: 3000000445}
   m_Layer: 0
-  m_Name: "Столешница"
+  m_Name: "РЎС‚РѕР»РµС€РЅРёС†Р°"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86557,7 +86558,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000448}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86588,7 +86589,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000450}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86619,7 +86620,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000452}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86650,7 +86651,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000454}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86681,7 +86682,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000456}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86712,7 +86713,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000458}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86743,7 +86744,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000460}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86774,7 +86775,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3000000462}
   m_Layer: 0
-  m_Name: "Поворот аллеи"
+  m_Name: "РџРѕРІРѕСЂРѕС‚ Р°Р»Р»РµРё"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -87091,8 +87092,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -87314,8 +87315,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -87537,8 +87538,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -87760,8 +87761,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -87983,8 +87984,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -88206,8 +88207,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -88429,8 +88430,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -88652,8 +88653,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -88875,8 +88876,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -89098,8 +89099,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -89321,8 +89322,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -89544,8 +89545,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -89767,8 +89768,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
-  clearColorMode: 0
-  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearColorMode: 1
+  backgroundColorHDR: {r: 0.015, g: 0.025, b: 0.055, a: 1}
   clearDepth: 1
   volumeLayerMask:
     serializedVersion: 2
@@ -89847,6 +89848,18 @@ MonoBehaviour:
       data1: 0
       data2: 0
   defaultFrameSettings: 0
+--- !u!114 &3200000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1823688464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba0de2f82eed40f0bc3fd2e176e1a1f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

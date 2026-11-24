@@ -34,6 +34,7 @@ public sealed class ParkRunController : MonoBehaviour
     private int destination = -1;
     private float elapsed, distance, runDuration;
     private Camera playerCamera;
+    private ParkNightShift night;
     private float restingFov;
     private float yaw, targetYaw, pitch;
     private bool lookingAround;
@@ -116,7 +117,7 @@ public sealed class ParkRunController : MonoBehaviour
     }
     private bool takingCover, peekHeld;
     private float coverBlend, peekBlend;
-    private bool UsingCover => takingCover || coverBlend > 0f;
+    public bool UsingCover => takingCover || coverBlend > 0f;
     public bool IsHidden => takingCover && coverBlend >= 1f && peekBlend <= .001f;
     public bool IsPeeking => takingCover && peekBlend > .001f;
 
@@ -124,6 +125,7 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void Start()
     {
+        night = GetComponent<ParkNightShift>();
         playerCamera = GetComponent<Camera>();
         restingFov = playerCamera.fieldOfView;
         transform.SetPositionAndRotation(posts[current].seat.position, posts[current].seat.rotation);
@@ -394,8 +396,10 @@ public sealed class ParkRunController : MonoBehaviour
         Fill(new Rect(0, 0, width, height), new Color32(32, 38, 40, 255));
         GUI.DrawTexture(new Rect(0, 0, split, height), video, ScaleMode.ScaleToFit, false);
         Fill(new Rect(0, 0, split, 48), new Color32(17, 24, 25, 220));
-        GUI.Label(new Rect(18, 6, split - 36, 36), $"КАМ {channel + 1:00}  ·  {posts[channel].Name}", titleStyle);
+        GUI.Label(new Rect(220, 6, split - 238, 36), $"КАМ {channel + 1:00}  ·  {posts[channel].Name}", titleStyle);
         GUI.Label(new Rect(split + 16, 17, width - split - 32, 35), "Камеры парка", titleStyle);
+        if (night)
+            GUI.Label(new Rect(split + 16, 55, width - split - 32, 28), $"Время · {night.Hour:00} ч", hintStyle);
 
         Rect chart = new Rect(split + 16, 92, width - split - 32, height - 184);
         DrawCameraChart(chart);
