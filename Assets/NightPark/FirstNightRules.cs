@@ -10,6 +10,7 @@ public sealed class FirstNightRules
     private int failures;
     private double nextTerry = 24, nextLarry = 55, leaveAt, repairAt = -1;
     private readonly int night;
+    private readonly int inactiveCamera;
     private double nextKesha = 100, watchingSince = -1;
     public int Kesha { get; private set; } = -1;
     private double searchDeadline;
@@ -28,11 +29,12 @@ public sealed class FirstNightRules
     public bool Caught { get; private set; }
     public bool Repairing => repairAt >= 0;
 
-    public FirstNightRules(List<int>[] exits, int circus, int den, Random random, int night = 1)
+    public FirstNightRules(List<int>[] exits, int circus, int den, Random random, int night = 1, int inactiveCamera = -1)
     {
         this.exits = exits;
         this.random = random;
         this.night = night;
+        this.inactiveCamera = inactiveCamera;
         Terry = circus;
         Larry = den;
     }
@@ -104,8 +106,11 @@ public sealed class FirstNightRules
         if (Kesha < 0)
         {
             if (time < nextKesha || running || hidden || room == Terry || AttackAt >= 0 || Umi >= 0) return;
-            int index = random.Next(exits.Length - (Broken >= 0 ? 1 : 0));
-            Kesha = Broken >= 0 && index >= Broken ? index + 1 : index;
+            var cameras = new List<int>();
+            for (int i = 0; i < exits.Length; i++)
+                if (i != Broken && i != inactiveCamera) cameras.Add(i);
+            if (cameras.Count == 0) return;
+            Kesha = cameras[random.Next(cameras.Count)];
             searchDeadline = KeshaDeadline = time + KeshaSearchSeconds;
         }
         if (room == Terry && !running)
@@ -171,6 +176,8 @@ public sealed class FirstNightRules
             return;
         }
         Broken = Larry;
+        // An unpaired camera has no live signal for Larry to disrupt.
+        if (Broken == inactiveCamera) { Broken = -1; nextLarry = time + 8; return; }
         damaged.Add(Broken);
         failures++;
         leaveAt = time + 7;
