@@ -44,7 +44,10 @@ public sealed class ParkRunController : MonoBehaviour
     private readonly HashSet<KeyCode> lookKeys = new HashSet<KeyCode>();
     private float initialRunPitch;
     private const float RunPitch = 45f;
-    private GUIStyle titleStyle, hintStyle, mapLabelStyle;
+    private GUIStyle titleStyle, hintStyle, mapLabelStyle, tabStyle;
+    private const double TabHoverCooldown = .4;
+    private const float TabHoverMargin = 8f;
+    private double nextTabHoverAt;
     private bool mapOpen, mapKeyHeld, overMapTab;
     private Vector2[] mapPoints;
     private bool overCameraTab;
@@ -71,6 +74,7 @@ public sealed class ParkRunController : MonoBehaviour
         liveCamera.enabled = night.IsChannelAvailable(index);
         mapOpen = false;
         lookingAround = false;
+        nextTabHoverAt = Time.unscaledTimeAsDouble + TabHoverCooldown;
     }
 
     private const float FeedWidthFraction = .73f;
@@ -106,6 +110,7 @@ public sealed class ParkRunController : MonoBehaviour
         liveCamera.enabled = false;
         liveCamera.targetTexture = null;
         liveCamera = null;
+        nextTabHoverAt = Time.unscaledTimeAsDouble + TabHoverCooldown;
     }
 
     private void OnDisable()
@@ -124,6 +129,7 @@ public sealed class ParkRunController : MonoBehaviour
         CloseTablet(playSound: true);
         mapOpen = !mapOpen;
         if (mapOpen) night.PlayMapOpen();
+        nextTabHoverAt = Time.unscaledTimeAsDouble + TabHoverCooldown;
     }
 
     private void OnApplicationFocus(bool focused)
@@ -397,9 +403,10 @@ public sealed class ParkRunController : MonoBehaviour
         }
     }
 
-    private void DrawCoverControls(Rect tab, float scale)
+    private void DrawCoverControls(float scale)
     {
-        Rect hide = new Rect((Screen.width - tab.width) / 2f, tab.y, tab.width, tab.height);
+        Rect hide = new Rect((Screen.width - 170f * scale) / 2f,
+            Screen.height - 46f * scale, 170f * scale, 34f * scale);
         if (!UsingCover)
         {
             if (GUI.Button(hide, "Спрятаться"))
@@ -469,7 +476,7 @@ public sealed class ParkRunController : MonoBehaviour
         Rect tab = MapTab;
         if (!night.IsPostNight && !mapOpen && !liveCamera && posts[current].cover)
         {
-            DrawCoverControls(tab, scale);
+            DrawCoverControls(scale);
             if (UsingCover) return;
         }
         Rect cameraTab = new Rect(Screen.width - tab.xMax, tab.y, tab.width, tab.height);
@@ -485,22 +492,14 @@ public sealed class ParkRunController : MonoBehaviour
         else if (pointer.type == EventType.Repaint || pointer.type == EventType.MouseMove ||
                  pointer.type == EventType.MouseDrag || pointer.type == EventType.MouseUp)
         {
-            bool inside = tab.Contains(pointer.mousePosition);
-            if (inside && !overMapTab && !lookingAround)
-                ToggleMap();
-            bool insideCamera = cameraTab.Contains(pointer.mousePosition);
-            if (insideCamera && !overCameraTab && !lookingAround)
-            {
-                if (liveCamera) CloseTablet(playSound: true);
-                else SelectChannel(channel);
-            }
-            overCameraTab = insideCamera;
-            overMapTab = inside;
+            UpdateTabHover(pointer.mousePosition, tab, cameraTab, scale);
         }
 
         if (liveCamera) DrawTablet();
-        GUI.Box(tab, mapOpen ? "▼   Карта   [M]   ▼" : "▲   Карта   [M]   ▲");
-        GUI.Box(cameraTab, liveCamera ? "▼   Камеры   ▼" : "▲   Камеры   ▲");
+        if (tabStyle == null) tabStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter };
+        tabStyle.fontSize = Mathf.RoundToInt(16f * scale);
+        GUI.Box(tab, mapOpen ? "▼   Карта   [M]   ▼" : "▲   Карта   [M]   ▲", tabStyle);
+        GUI.Box(cameraTab, liveCamera ? "▼   Камеры   ▼" : "▲   Камеры   ▲", tabStyle);
         if (liveCamera) return;
         bool overTab = tab.Contains(pointer.mousePosition) || cameraTab.Contains(pointer.mousePosition);
         if (mapOpen)
@@ -512,13 +511,38 @@ public sealed class ParkRunController : MonoBehaviour
         else if (!overTab) LookOutside(tab);
     }
 
+    private void UpdateTabHover(Vector2 pointer, Rect mapTab, Rect cameraTab, float scale)
+    {
+        bool insideMap = mapTab.Contains(pointer);
+        bool insideCamera = cameraTab.Contains(pointer);
+        if (!lookingAround && Time.unscaledTimeAsDouble >= nextTabHoverAt)
+        {
+            if (insideMap && !overMapTab) ToggleMap();
+            else if (insideCamera && !overCameraTab)
+            {
+                if (liveCamera) CloseTablet(playSound: true);
+                else SelectChannel(channel);
+            }
+        }
+
+        // Small excursions outside a tab don't count as leaving it. An entry
+        // ignored during cooldown is consumed, so waiting over it won't toggle it.
+        float margin = TabHoverMargin * scale;
+        Rect mapExit = Rect.MinMaxRect(mapTab.xMin - margin, mapTab.yMin - margin,
+            mapTab.xMax + margin, mapTab.yMax + margin);
+        Rect cameraExit = Rect.MinMaxRect(cameraTab.xMin - margin, cameraTab.yMin - margin,
+            cameraTab.xMax + margin, cameraTab.yMax + margin);
+        overMapTab = insideMap || (overMapTab && mapExit.Contains(pointer));
+        overCameraTab = insideCamera || (overCameraTab && cameraExit.Contains(pointer));
+    }
+
     private float MapScale => Mathf.Min(1.15f, Screen.width * .58f / 520f, Screen.height * .42f / 272f);
     private Rect MapTab
     {
         get
         {
             float scale = MapScale;
-            return new Rect(12f * scale, Screen.height - 46f * scale, 170f * scale, 34f * scale);
+            return new Rect(12f * scale, Screen.height - 56f * scale, 210f * scale, 44f * scale);
         }
     }
 
