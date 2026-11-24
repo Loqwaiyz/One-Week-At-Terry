@@ -31,6 +31,12 @@ public sealed class ParkNightShift : MonoBehaviour
     private static int nextNight = 1;
     public int Number { get; private set; } = 1;
     private Transform terry, larry, umi, kesha;
+    private ParkPostNight postNight;
+    public bool IsPostNight => postNight && postNight.Active;
+    public bool IsChannelAvailable(int index) => index != GetComponent<ParkRunController>().YardPost ||
+        ((IsPostNight || Number > 1) && ParkPostNight.CameraConnected);
+
+    public void DrawPostNightOverlay() => postNight.DrawOverlay();
     private int keshaPost = -1;
     private int umiPost = -1;
 
@@ -38,10 +44,11 @@ public sealed class ParkNightShift : MonoBehaviour
     private static void ResetSelection() => nextNight = 1;
     private int terryPost = -1, larryPost = -1;
     private double NightTime => Time.unscaledTimeAsDouble - startTime;
-    public bool IsBroken(int channel) => rules != null && rules.IsBroken(channel);
+    public bool IsBroken(int channel) => !IsPostNight && rules != null && rules.IsBroken(channel);
 
     public bool TryDepart()
     {
+        if (IsPostNight) return postNight.CanTravel;
         if (completed || !rules.CanDepart(NightTime)) return false;
         rules.Depart();
         return true;
@@ -108,6 +115,7 @@ public sealed class ParkNightShift : MonoBehaviour
         beam.shadows = LightShadows.Soft;
         beam.enabled = false;
         startTime = Time.unscaledTimeAsDouble;
+        if (Number == 1 && ParkPostNight.HasUnfinishedSegment) BeginPostNight();
     }
 
     private static AudioClip CreateCue(ParkMascot kind)
@@ -257,7 +265,7 @@ public sealed class ParkNightShift : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Input.GetKey(KeyCode.C) && Input.GetKey(KeyCode.D) &&
             (Input.GetKeyDown(KeyCode.KeypadPlus) || Input.GetKeyDown(KeyCode.Plus) ||
-             (Input.GetKeyDown(KeyCode.Equals) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))))
+             Input.GetKeyDown(KeyCode.Equals))) // Main keyboard +/= key, with or without Shift.
         {
             FinishNight(false);
             return;
@@ -327,6 +335,28 @@ public sealed class ParkNightShift : MonoBehaviour
         if (!caught) Hour = 6;
         beam.enabled = false;
         player.enabled = false;
+        if (!caught && Number == 1) ParkPostNight.MarkPending();
+    }
+
+    public void BeginPostNight()
+    {
+        if (IsPostNight || Number != 1 || !ParkPostNight.HasUnfinishedSegment) return;
+        completed = true;
+        lost = selectingNight = false;
+        Hour = 6;
+        beam.enabled = false;
+        if (warning) warning.Stop();
+        if (encounterAudio) encounterAudio.Stop();
+        foreach (Transform mascot in new[] { terry, larry, umi, kesha })
+            if (mascot) mascot.gameObject.SetActive(false);
+        player.PreparePostNight();
+        postNight = gameObject.AddComponent<ParkPostNight>();
+        postNight.Begin(player, this);
+    }
+
+    public void StartSecondNight()
+    {
+        if (IsPostNight && postNight.Finished) LoadNight(2);
     }
 
     private void LoadNight(int number)
@@ -346,6 +376,11 @@ public sealed class ParkNightShift : MonoBehaviour
 
     private void OnGUI()
     {
+        if (IsPostNight)
+        {
+            if (!player.enabled) postNight.DrawOverlay();
+            return;
+        }
         int previousDepth = GUI.depth;
         Matrix4x4 previousMatrix = GUI.matrix;
         GUI.depth = -20;
@@ -367,8 +402,13 @@ public sealed class ParkNightShift : MonoBehaviour
             if (selectingNight)
             {
                 GUI.Label(new Rect(0, height / 2 - 235, width, 60), "Выбор ночи", victoryTitle);
+                bool previousEnabled = GUI.enabled;
                 for (int i = 1; i <= LastNight; i++)
+                {
+                    GUI.enabled = previousEnabled && (i == 1 || ParkPostNight.SegmentCompleted);
                     if (GUI.Button(new Rect(width / 2 - 110, height / 2 - 173 + (i - 1) * 52, 220, 44), $"Ночь {i}")) LoadNight(i);
+                }
+                GUI.enabled = previousEnabled;
             }
             else
             {
@@ -382,9 +422,10 @@ public sealed class ParkNightShift : MonoBehaviour
                         LoadNight(Number);
                 }
                 else if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 88, 220, 48),
-                    Number < LastNight ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
+                    Number == 1 ? "К камере у хоздвора" : Number < LastNight ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
                 {
-                    if (Number < LastNight) LoadNight(Number + 1);
+                    if (Number == 1) BeginPostNight();
+                    else if (Number < LastNight) LoadNight(Number + 1);
                     else selectingNight = true;
                 }
             }

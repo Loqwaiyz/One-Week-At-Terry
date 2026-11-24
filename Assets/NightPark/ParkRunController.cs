@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
@@ -48,7 +49,13 @@ public sealed class ParkRunController : MonoBehaviour
     private Vector2[] mapPoints;
     private bool overCameraTab;
     private int channel;
-    public int ViewedChannel => liveCamera && !night.IsBroken(channel) ? channel : -1;
+    public int ViewedChannel => liveCamera && night.IsChannelAvailable(channel) && !night.IsBroken(channel) ? channel : -1;
+    public bool IsDirecting { get; private set; }
+    public bool TabletOpen => liveCamera;
+    public bool MapOpen => mapOpen;
+    public int ObjectivePost { get; set; } = -1;
+    public int YardPost => Array.FindIndex(posts, p => p.Name == "Мусорка");
+    public Transform PostSeat(int index) => posts[index].seat;
     public int SelectedChannel => liveCamera ? channel : -1;
     private Camera liveCamera;
     private RenderTexture video;
@@ -59,7 +66,7 @@ public sealed class ParkRunController : MonoBehaviour
         channel = index;
         liveCamera = posts[index].surveillance;
         FitVideoToScreen();
-        liveCamera.enabled = true;
+        liveCamera.enabled = night.IsChannelAvailable(index);
         mapOpen = false;
         lookingAround = false;
     }
@@ -132,6 +139,7 @@ public sealed class ParkRunController : MonoBehaviour
 
     public FirstNightRules CreateNight(int number)
     {
+        night = GetComponent<ParkNightShift>();
         var exits = new List<int>[posts.Length];
         for (int i = 0; i < exits.Length; i++) exits[i] = new List<int>();
         foreach (Passage route in passages)
@@ -141,7 +149,53 @@ public sealed class ParkRunController : MonoBehaviour
         }
         GetComponent<Camera>().cullingMask &= ~(1 << ParkMascots.SurveillanceLayer);
         return new FirstNightRules(exits, Array.FindIndex(posts, p => p.Name == "Цирковой шатёр"),
-            Array.FindIndex(posts, p => p.Name == "Черепашье логово"), new System.Random(), number);
+            Array.FindIndex(posts, p => p.Name == "Черепашье логово"), new System.Random(), number,
+            night.IsChannelAvailable(YardPost) ? -1 : YardPost);
+    }
+
+    public void PreparePostNight()
+    {
+        CloseTablet();
+        mapOpen = takingCover = peekHeld = lookingAround = false;
+        coverBlend = peekBlend = yaw = targetYaw = pitch = 0;
+        destination = -1;
+        lookKeys.Clear();
+        playerCamera.fieldOfView = restingFov;
+        transform.SetPositionAndRotation(posts[current].seat.position, posts[current].seat.rotation);
+        enabled = true;
+    }
+
+    // Shares the same viewpoint and lens as traversal; never introduces a free-fly controller.
+    public IEnumerator DirectView(Vector3 position, Vector3 subject, float holdSeconds)
+    {
+        if (IsRunning || IsDirecting) yield break;
+        IsDirecting = true;
+        CloseTablet();
+        mapOpen = lookingAround = false;
+        lookKeys.Clear();
+        Vector3 origin = transform.position;
+        Quaternion rotation = transform.rotation;
+        float fov = playerCamera.fieldOfView;
+        Quaternion shotRotation = Quaternion.LookRotation(subject - position);
+        for (float t = 0; t < 1; t += Time.unscaledDeltaTime / 1.15f)
+        {
+            float blend = Mathf.SmoothStep(0, 1, t);
+            transform.SetPositionAndRotation(Vector3.Lerp(origin, position, blend), Quaternion.Slerp(rotation, shotRotation, blend));
+            playerCamera.fieldOfView = Mathf.Lerp(fov, 46, blend);
+            yield return null;
+        }
+        transform.SetPositionAndRotation(position, shotRotation);
+        yield return new WaitForSecondsRealtime(holdSeconds);
+        for (float t = 0; t < 1; t += Time.unscaledDeltaTime / .9f)
+        {
+            float blend = Mathf.SmoothStep(0, 1, t);
+            transform.SetPositionAndRotation(Vector3.Lerp(position, origin, blend), Quaternion.Slerp(shotRotation, rotation, blend));
+            playerCamera.fieldOfView = Mathf.Lerp(46, fov, blend);
+            yield return null;
+        }
+        transform.SetPositionAndRotation(origin, rotation);
+        playerCamera.fieldOfView = fov;
+        IsDirecting = false;
     }
 
     public Transform CreateMascot(ParkMascot kind)
@@ -193,10 +247,16 @@ public sealed class ParkRunController : MonoBehaviour
             Quaternion.LookRotation(facing));
     }
 
-    private void Start()
+    private void Awake()
     {
         night = GetComponent<ParkNightShift>();
         playerCamera = GetComponent<Camera>();
+        restingFov = playerCamera.fieldOfView;
+        transform.SetPositionAndRotation(posts[current].seat.position, posts[current].seat.rotation);
+    }
+
+    private void Start()
+    {
         // Surveillance cameras additionally see a volume with a brighter fixed exposure.
         var exposureObject = new GameObject("Экспозиция камер наблюдения");
         exposureObject.transform.SetParent(transform, false);
@@ -210,8 +270,6 @@ public sealed class ParkRunController : MonoBehaviour
         int exposureMask = 1 << exposureObject.layer;
         foreach (Post post in posts)
             post.surveillance.GetComponent<HDAdditionalCameraData>().volumeLayerMask |= exposureMask;
-        restingFov = playerCamera.fieldOfView;
-        transform.SetPositionAndRotation(posts[current].seat.position, posts[current].seat.rotation);
     }
 
     private void AddPoint(Vector3 point)
@@ -222,7 +280,7 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void BeginRun(Passage passage)
     {
-        if (IsRunning || !night.TryDepart()) return;
+        if (IsRunning || IsDirecting || !night.TryDepart()) return;
         mapOpen = false;
         bool forward = current == passage.first;
         destination = forward ? passage.second : passage.first;
@@ -246,6 +304,7 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (IsDirecting) return;
         if (liveCamera) FitVideoToScreen();
         if (!IsRunning)
         {
@@ -355,6 +414,13 @@ public sealed class ParkRunController : MonoBehaviour
 
     private void OnGUI()
     {
+        DrawControls();
+        if (night && night.IsPostNight) night.DrawPostNightOverlay();
+    }
+
+    private void DrawControls()
+    {
+        if (IsDirecting) return;
         if (titleStyle == null)
         {
             titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold };
@@ -391,7 +457,7 @@ public sealed class ParkRunController : MonoBehaviour
 
         float scale = MapScale;
         Rect tab = MapTab;
-        if (!mapOpen && !liveCamera && posts[current].cover)
+        if (!night.IsPostNight && !mapOpen && !liveCamera && posts[current].cover)
         {
             DrawCoverControls(tab, scale);
             if (UsingCover) return;
@@ -477,17 +543,18 @@ public sealed class ParkRunController : MonoBehaviour
         Matrix4x4 previous = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(Vector3.one * scale);
         Fill(new Rect(0, 0, width, height), new Color32(32, 38, 40, 255));
-        if (night && night.IsBroken(channel))
+        if (!night.IsChannelAvailable(channel) || night.IsBroken(channel))
         {
             Fill(new Rect(0, 0, split, height), new Color32(12, 16, 18, 255));
-            GUI.Label(new Rect(split / 2 - 62, height / 2 - 18, 170, 36), "Нет сигнала", titleStyle);
+            GUI.Label(new Rect(split / 2 - 160, height / 2 - 36, 360, 80),
+                night.IsChannelAvailable(channel) ? "Нет сигнала" : "Камера не подключена\nПередатчик у хозяйственного двора", hintStyle);
         }
         else GUI.DrawTexture(new Rect(0, 0, split, height), video, ScaleMode.ScaleToFit, false);
         Fill(new Rect(0, 0, split, 48), new Color32(17, 24, 25, 220));
         GUI.Label(new Rect(220, 6, split - 238, 36), $"КАМ {channel + 1:00}  ·  {posts[channel].Name}", titleStyle);
         GUI.Label(new Rect(split + 16, 17, width - split - 32, 35), "Камеры парка", titleStyle);
         if (night)
-            GUI.Label(new Rect(split + 16, 55, width - split - 32, 28), $"Ночь {night.Number} · {night.Hour:00} ч", hintStyle);
+            GUI.Label(new Rect(split + 16, 55, width - split - 32, 28), night.IsPostNight ? "После первой ночи · 06:00" : $"Ночь {night.Number} · {night.Hour:00} ч", hintStyle);
 
         Rect chart = new Rect(split + 16, 92, width - split - 32, height - 184);
         DrawCameraChart(chart);
@@ -538,7 +605,7 @@ public sealed class ParkRunController : MonoBehaviour
             Fill(node, new Color32(145, 165, 165, 255));
             Fill(new Rect(node.x + 2, node.y + 2, marker - 4, marker - 4),
                 i == channel || underPointer ? new Color32(38, 116, 104, 255) : new Color32(45, 53, 55, 255));
-            GUI.Label(node, (i + 1).ToString("00"), mapLabelStyle);
+            GUI.Label(node, (i + 1).ToString("00") + (night.IsChannelAvailable(i) ? "" : " ×"), mapLabelStyle);
             if (GUI.Button(node, GUIContent.none, GUIStyle.none) && i != channel) SelectChannel(i);
         }
         GUI.Label(new Rect(chart.x, chart.yMax + 10, chart.width, 28),
@@ -591,7 +658,7 @@ public sealed class ParkRunController : MonoBehaviour
             Fill(node, edge);
             Fill(new Rect(node.x + 2, node.y + 2, node.width - 4, node.height - 4),
                 exit != null ? new Color32(42, 85, 78, 255) : new Color32(53, 55, 58, 255));
-            GUI.Label(node, posts[i].Name, mapLabelStyle);
+            GUI.Label(node, (i == ObjectivePost ? "◆ " : "") + posts[i].Name, mapLabelStyle);
             if (exit != null && GUI.Button(node, GUIContent.none, GUIStyle.none))
             {
                 BeginRun(exit);
