@@ -6,6 +6,16 @@ using UnityEngine.Rendering.HighDefinition;
 [RequireComponent(typeof(ParkRunController))]
 public sealed class ParkNightShift : MonoBehaviour
 {
+    private const int LastNight = 7;
+    private Transform falcon, wolf, elephant;
+    private AudioClip trumpet;
+    private AudioSource warning, encounterAudio;
+    private AudioClip footsteps, scratching, chirp, clank;
+    private int heardFailures;
+    private double showLitFalconUntil;
+    private AudioClip wingbeat, howl;
+    private FirstNightRules.Visitor shownVisitor;
+    private int shownRoom = -1;
     private const int MaxCharges = 15;
     private const double Duration = 420.0;
     private const double FlashDuration = 1.0;
@@ -34,7 +44,7 @@ public sealed class ParkNightShift : MonoBehaviour
     private static void ResetSelection() => nextNight = 1;
     private int terryPost = -1, larryPost = -1;
     private double NightTime => Time.unscaledTimeAsDouble - startTime;
-    public int BrokenChannel => IsPostNight || rules == null ? -1 : rules.Broken;
+    public bool IsBroken(int channel) => !IsPostNight && rules != null && rules.IsBroken(channel);
 
     public bool TryDepart()
     {
@@ -57,10 +67,38 @@ public sealed class ParkNightShift : MonoBehaviour
             umi = player.CreateMascot(ParkMascot.Umi);
             umi.gameObject.SetActive(false);
         }
-        if (Number == 3)
+        if (Number >= 3)
         {
             kesha = player.CreateMascot(ParkMascot.Kesha);
             kesha.gameObject.SetActive(false);
+        }
+        encounterAudio = gameObject.AddComponent<AudioSource>();
+        encounterAudio.loop = true;
+        footsteps = CreateCue(ParkMascot.Terry);
+        scratching = CreateCue(ParkMascot.Umi);
+        chirp = CreateCue(ParkMascot.Kesha);
+        clank = CreateCue(ParkMascot.Larry);
+        if (Number >= 5)
+        {
+            falcon = player.CreateMascot(ParkMascot.Falcon);
+            wolf = player.CreateMascot(ParkMascot.Wolf);
+            falcon.gameObject.SetActive(false);
+            wolf.gameObject.SetActive(false);
+            if (Number == 7)
+            {
+                elephant = player.CreateMascot(ParkMascot.Elephant);
+                elephant.gameObject.SetActive(false);
+                trumpet = CreateCue(ParkMascot.Elephant);
+            }
+            var emitter = new GameObject("Звук крыльев");
+            emitter.transform.SetParent(transform, false);
+            warning = emitter.AddComponent<AudioSource>();
+            warning.spatialBlend = 1;
+            warning.minDistance = 6;
+            warning.dopplerLevel = 0;
+            warning.loop = true;
+            wingbeat = CreateWarning(false);
+            howl = CreateWarning(true);
         }
         var lamp = new GameObject("Фонарик");
         lamp.transform.SetParent(transform, false);
@@ -78,6 +116,147 @@ public sealed class ParkNightShift : MonoBehaviour
         beam.enabled = false;
         startTime = Time.unscaledTimeAsDouble;
         if (Number == 1 && ParkPostNight.HasUnfinishedSegment) BeginPostNight();
+    }
+
+    private static AudioClip CreateCue(ParkMascot kind)
+    {
+        const int rate = 22050;
+        float[] samples = new float[rate * 2];
+        var random = new System.Random(31);
+        double grain = 0, phase = 0;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            double t = (double)i / rate;
+            double noise = 2 * random.NextDouble() - 1;
+            grain = .8 * grain + .2 * noise;
+            double pulse, sound;
+            switch (kind)
+            {
+                case ParkMascot.Elephant:
+                    phase += 2 * Math.PI * (190 + 140 * Math.Sin(Math.PI * Math.Min(t, .75) / .75)) / rate;
+                    sound = t < .75 ? Math.Sin(Math.PI * t / .75) *
+                        (.45 * Math.Sin(phase) + .27 * Math.Sin(3*phase) + .13 * Math.Sin(5*phase)) : 0;
+                    break;
+                case ParkMascot.Terry:
+                    pulse = t % .94;
+                    sound = Math.Exp(-12 * pulse) * (.72 * Math.Sin(2 * Math.PI * (96 * pulse - 10 * pulse * pulse)) + .55 * grain);
+                    break;
+                case ParkMascot.Kesha:
+                    pulse = t < .28 ? t : t - .28;
+                    phase += 2 * Math.PI * (1250 + 510 * Math.Sin(14 * pulse)) / rate;
+                    sound = pulse < .21 ? .53 * Math.Pow(Math.Sin(Math.PI * pulse / .21), 2) * Math.Sin(phase) : 0;
+                    break;
+                case ParkMascot.Umi:
+                    pulse = t % .18;
+                    sound = t < .54 ? 1.8 * grain * Math.Pow(Math.Sin(Math.PI * pulse / .18), 4) : 0;
+                    break;
+                default:
+                    sound = Math.Exp(-9 * t) * (.46 * Math.Sin(2 * Math.PI * 620 * t) + .32 * Math.Sin(2 * Math.PI * 917 * t) + .5 * grain);
+                    break;
+            }
+            samples[i] = Mathf.Clamp((float)(sound * Math.Min(1, t * 180) * Math.Min(1, (2 - t) * 100)), -1f, 1f);
+        }
+        var clip = AudioClip.Create(kind.ToString(), samples.Length, 1, rate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private void UpdateEncounterAudio()
+    {
+        AudioClip cue = rules.AttackAt >= 0 ? footsteps : rules.Kesha >= 0 ? chirp :
+            rules.Umi >= 0 ? scratching :
+            rules.Intruder == FirstNightRules.Visitor.Elephant && rules.Response != FirstNightRules.ElephantResponse.Hide ? howl : null;
+        if (encounterAudio.clip != cue)
+        {
+            encounterAudio.Stop();
+            encounterAudio.clip = cue;
+            if (cue) encounterAudio.Play();
+        }
+        encounterAudio.volume = cue == scratching && rules.UmiAttackAt < 0 ? .36f :
+            cue == chirp && player.SelectedChannel != rules.Kesha ? .46f : .9f;
+        if (rules.Failures != heardFailures) encounterAudio.PlayOneShot(clank, .8f);
+        heardFailures = rules.Failures;
+    }
+
+    private static AudioClip CreateWarning(bool wolfCall)
+    {
+        const int rate = 22050;
+        var samples = new float[rate * 2];
+        var noise = new System.Random(53);
+        double phase = 0, rustle = 0;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            double t = (double)i / rate;
+            double envelope = Math.Pow(Math.Sin(Math.PI * t / 2), 2);
+            phase += 2 * Math.PI * (255 + 75 * Math.Sin(Math.PI * t / 2)) / rate;
+            rustle = .75 * rustle + .25 * (2 * noise.NextDouble() - 1);
+            double sound = wolfCall ? .65 * Math.Sin(phase) + .2 * Math.Sin(2 * phase) :
+                rustle * Math.Pow(Math.Sin(4 * Math.PI * t), 6);
+            samples[i] = (float)(sound * envelope);
+        }
+        var clip = AudioClip.Create(wolfCall ? "Вой" : "Взмахи крыльев", samples.Length, 1, rate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private void ShowVisitor(double elapsed)
+    {
+        if (!warning) return;
+        if (shownVisitor != rules.Intruder || (rules.Intruder == FirstNightRules.Visitor.Elephant && shownRoom != rules.IntruderRoom))
+        {
+            shownVisitor = rules.Intruder;
+            shownRoom = rules.IntruderRoom;
+            bool showWolf = shownVisitor == FirstNightRules.Visitor.Wolf;
+            falcon.gameObject.SetActive(shownVisitor == FirstNightRules.Visitor.Falcon);
+            wolf.gameObject.SetActive(showWolf);
+            bool showElephant = shownVisitor == FirstNightRules.Visitor.Elephant;
+            if (elephant) elephant.gameObject.SetActive(showElephant);
+            warning.Stop();
+            if (shownVisitor != FirstNightRules.Visitor.None)
+            {
+                if (showElephant)
+                {
+                    bool onCamera = rules.ElephantChannel >= 0;
+                    foreach (Transform part in elephant)
+                        part.gameObject.layer = onCamera ? ParkMascots.SurveillanceLayer : 0;
+                    if (onCamera)
+                    {
+                        player.PlaceMascot(elephant, rules.ElephantChannel, ParkMascot.Elephant);
+                        elephant.position += Vector3.up * 1.38f;
+                    }
+                    else player.PlaceVisitor(elephant, rules.IntruderRoom, true);
+                }
+                else if (showWolf) player.PlaceVisitor(wolf, rules.IntruderRoom, true);
+                else if (!player.PlaceFalcon(falcon, rules.IntruderRoom))
+                {
+                    rules.SkipBlockedFalcon(elapsed);
+                    falcon.gameObject.SetActive(false);
+                    return;
+                }
+                warning.transform.position = showElephant ? transform.position : (showWolf ? wolf : falcon).position;
+                warning.clip = showElephant ? trumpet : showWolf ? howl : wingbeat;
+                warning.Play();
+            }
+        }
+        if (shownVisitor == FirstNightRules.Visitor.Falcon) warning.transform.position = falcon.position;
+        if (shownVisitor == FirstNightRules.Visitor.None)
+            falcon.gameObject.SetActive(elapsed < showLitFalconUntil);
+        if (shownVisitor == FirstNightRules.Visitor.Elephant && rules.ElephantChannel < 0)
+            elephant.gameObject.SetActive(player.SelectedChannel < 0);
+        if (rules.WolfStunned) warning.Stop();
+        warning.volume = shownVisitor == FirstNightRules.Visitor.Wolf ?
+            Mathf.Lerp(.15f,.8f,1f - (float)(rules.IntruderDeadline - elapsed) / 9f) : .95f;
+    }
+
+    private void OnDestroy()
+    {
+        if (footsteps) Destroy(footsteps);
+        if (scratching) Destroy(scratching);
+        if (chirp) Destroy(chirp);
+        if (clank) Destroy(clank);
+        if (wingbeat) Destroy(wingbeat);
+        if (howl) Destroy(howl);
+        if (trumpet) Destroy(trumpet);
     }
 
     private void Update()
@@ -110,7 +289,9 @@ public sealed class ParkNightShift : MonoBehaviour
             kesha.gameObject.SetActive(keshaPost >= 0);
             if (keshaPost >= 0) player.PlaceMascot(kesha, keshaPost, ParkMascot.Kesha);
         }
-        double deadline = rules.CaughtByKesha ? rules.KeshaDeadline : rules.CaughtByUmi ? rules.UmiAttackAt : rules.AttackAt;
+        ShowVisitor(elapsed);
+        UpdateEncounterAudio();
+        double deadline = rules.Intruder != FirstNightRules.Visitor.None ? rules.IntruderDeadline : rules.CaughtByKesha ? rules.KeshaDeadline : rules.CaughtByUmi ? rules.UmiAttackAt : rules.AttackAt;
         bool caughtBeforeDawn = rules.Caught && deadline < Duration;
         if (elapsed >= Duration || caughtBeforeDawn)
         {
@@ -130,10 +311,25 @@ public sealed class ParkNightShift : MonoBehaviour
             flashEnds = now + FlashDuration;
         }
         beam.enabled = now < flashEnds;
+        if (beam.enabled && rules.Intruder != FirstNightRules.Visitor.None && player.CanRepairHere)
+        {
+            Transform target = shownVisitor == FirstNightRules.Visitor.Elephant ? elephant : shownVisitor == FirstNightRules.Visitor.Wolf ? wolf : falcon;
+            Vector3 offset = target.position - beam.transform.position;
+            if (offset.sqrMagnitude <= beam.range * beam.range &&
+                Vector3.Angle(beam.transform.forward, offset) <= beam.spotAngle / 2f &&
+                !Physics.Linecast(beam.transform.position, target.position, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (shownVisitor == FirstNightRules.Visitor.Falcon)
+                    showLitFalconUntil = flashEnds - startTime;
+                rules.Flash(elapsed);
+            }
+        }
     }
 
     private void FinishNight(bool caught)
     {
+        if (warning) warning.Stop();
+        encounterAudio.Stop();
         completed = true;
         lost = caught;
         if (!caught) Hour = 6;
@@ -149,6 +345,8 @@ public sealed class ParkNightShift : MonoBehaviour
         lost = selectingNight = false;
         Hour = 6;
         beam.enabled = false;
+        if (warning) warning.Stop();
+        if (encounterAudio) encounterAudio.Stop();
         foreach (Transform mascot in new[] { terry, larry, umi, kesha })
             if (mascot) mascot.gameObject.SetActive(false);
         player.PreparePostNight();
@@ -171,6 +369,8 @@ public sealed class ParkNightShift : MonoBehaviour
 
     private void OnDisable()
     {
+        if (warning) warning.Stop();
+        if (encounterAudio) encounterAudio.Stop();
         if (beam) beam.enabled = false;
     }
 
@@ -201,21 +401,19 @@ public sealed class ParkNightShift : MonoBehaviour
             }
             if (selectingNight)
             {
-                GUI.Label(new Rect(0, height / 2 - 70, width, 60), "Выбор ночи", victoryTitle);
-                if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 8, 220, 48), "Ночь 1"))
-                    LoadNight(1);
+                GUI.Label(new Rect(0, height / 2 - 235, width, 60), "Выбор ночи", victoryTitle);
                 bool previousEnabled = GUI.enabled;
-                GUI.enabled = ParkPostNight.SegmentCompleted;
-                if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 64, 220, 48), "Ночь 2"))
-                    LoadNight(2);
-                if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 120, 220, 48), "Ночь 3"))
-                    LoadNight(3);
+                for (int i = 1; i <= LastNight; i++)
+                {
+                    GUI.enabled = previousEnabled && (i == 1 || ParkPostNight.SegmentCompleted);
+                    if (GUI.Button(new Rect(width / 2 - 110, height / 2 - 173 + (i - 1) * 52, 220, 44), $"Ночь {i}")) LoadNight(i);
+                }
                 GUI.enabled = previousEnabled;
             }
             else
             {
-                GUI.Label(new Rect(0, height / 2 - 85, width, 95), lost ? (rules.CaughtByKesha ? "Кеша поймал тебя" : rules.CaughtByUmi ? "Уми нашла тебя" : "Терри поймал тебя") : "6 утра", victoryTime);
-                GUI.Label(new Rect(0, height / 2 + 10, width, 60), lost ? $"Ночь {Number} не пройдена" : $"Победа! Ночь {Number} пройдена", victoryTitle);
+                GUI.Label(new Rect(0, height / 2 - 85, width, 95), lost ? (rules.Intruder == FirstNightRules.Visitor.Elephant ? "Год нашёл тебя" : rules.Intruder == FirstNightRules.Visitor.Wolf ? "Клык догнал тебя" : rules.Intruder == FirstNightRules.Visitor.Falcon ? "Савелий настиг тебя" : rules.CaughtByKesha ? "Кеша поймал тебя" : rules.CaughtByUmi ? "Уми нашла тебя" : "Терри поймал тебя") : "6 утра", victoryTime);
+                GUI.Label(new Rect(0, height / 2 + 10, width, 60), lost ? $"Ночь {Number} не пройдена" : Number == LastNight ? "Ты пережил все семь ночей!" : $"Победа! Ночь {Number} пройдена", victoryTitle);
                 if (lost)
                 {
                     if (GUI.Button(new Rect(width / 2 - 230, height / 2 + 88, 220, 48), "Дальше"))
@@ -224,10 +422,10 @@ public sealed class ParkNightShift : MonoBehaviour
                         LoadNight(Number);
                 }
                 else if (GUI.Button(new Rect(width / 2 - 110, height / 2 + 88, 220, 48),
-                    Number == 1 ? "К камере у хоздвора" : Number < 3 ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
+                    Number == 1 ? "К камере у хоздвора" : Number < LastNight ? $"Начать ночь {Number + 1}" : "Выбор ночи"))
                 {
                     if (Number == 1) BeginPostNight();
-                    else if (Number < 3) LoadNight(Number + 1);
+                    else if (Number < LastNight) LoadNight(Number + 1);
                     else selectingNight = true;
                 }
             }
@@ -235,17 +433,10 @@ public sealed class ParkNightShift : MonoBehaviour
         else
         {
             float centre = Screen.width / scale / 2;
-            if (rules != null && rules.AttackAt >= 0)
-                GUI.Box(new Rect(centre - 160, 58, 320, 32), $"Тяжёлые шаги рядом! Беги · {Math.Ceiling(Math.Max(0, rules.AttackAt - NightTime))} с");
-            if (rules != null && rules.Kesha >= 0)
-                GUI.Box(new Rect(centre - 260, 58, 520, 32), $"Кеша! Найди за {FirstNightRules.KeshaSearchSeconds} с и смотри {FirstNightRules.KeshaWatchSeconds} с подряд");
-            if (rules != null && rules.UmiAttackAt >= 0)
-                GUI.Box(new Rect(centre - 220, 58, 440, 32), "Шорох у укрытия! Спрячься и не выглядывай");
-            if (rules != null && player.CanRepairHere && player.CurrentPost == rules.Broken)
+            if (rules != null && player.CanRepairHere && rules.CanRepair(player.CurrentPost))
             {
                 Rect repair = new Rect(centre - 110, Screen.height / scale - 100, 220, 36);
-                if (rules.LarryAtFault) GUI.Box(repair, "Ларри ещё у камеры");
-                else if (rules.Repairing) GUI.Box(repair, $"Ремонт · {rules.RepairRemaining(NightTime):0.0} с");
+                if (rules.Repairing) GUI.Box(repair, $"Ремонт · {rules.RepairRemaining(NightTime):0.0} с");
                 else if (GUI.Button(repair, "Починить камеру · 2 с"))
                     rules.BeginRepair(NightTime, player.CurrentPost);
             }

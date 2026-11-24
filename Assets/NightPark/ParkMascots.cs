@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public enum ParkMascot { Terry, Larry, Umi, Kesha }
+public enum ParkMascot { Terry, Larry, Umi, Kesha, Falcon, Wolf, Elephant }
 
 internal static class ParkMascots
 {
@@ -28,11 +28,48 @@ internal static class ParkMascots
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", color);
             renderer.SetPropertyBlock(tint);
-            if (kind != ParkMascot.Larry)
+            if (lion || kind == ParkMascot.Umi || kind == ParkMascot.Kesha)
             {
                 g.layer = SurveillanceLayer;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
             }
+        }
+        if (kind == ParkMascot.Elephant)
+        {
+            actor.name = "Слон Год";
+            Color skin = new Color(.55f,.60f,.68f);
+            Part("Голова", Vector3.zero, Vector3.one*.9f, skin);
+            Part("Туловище", new Vector3(0,-.26f,-.65f), new Vector3(1.1f,1.2f,1.7f), skin);
+            Part("Хобот", new Vector3(0,-.38f,.45f), new Vector3(.25f,1.05f,.32f), skin);
+            foreach (int side in new[]{-1,1})
+            {
+                Part("Ухо", new Vector3(side*.53f,.03f,-.14f), new Vector3(.72f,.86f,.16f), skin);
+                Part("Бивень", new Vector3(side*.22f,-.28f,.42f), new Vector3(.12f,.15f,.6f), Color.white);
+                foreach (float z in new[]{-.2f,-1.02f})
+                    Part("Нога", new Vector3(side*.34f,-.92f,z), new Vector3(.35f,.9f,.4f), skin);
+            }
+            return actor;
+        }
+        if (kind == ParkMascot.Wolf || kind == ParkMascot.Falcon)
+        {
+            bool wolf = kind == ParkMascot.Wolf;
+            actor.name = wolf ? "Волк Клык" : "Сокол Савелий";
+            Color coat = wolf ? Color.gray : brown;
+            Part("Тело", new Vector3(0,-.35f,-.4f), new Vector3(.65f,.75f,1.3f), coat);
+            Part("Голова", Vector3.zero, Vector3.one*.62f, coat);
+            Part(wolf ? "Морда" : "Клюв", new Vector3(0,-.08f,.32f), new Vector3(.32f,.25f,.46f), wolf ? Color.gray : amber);
+            foreach (int side in new[]{-1,1})
+            {
+                Part("Глаз", new Vector3(side*.16f,.05f,.25f), Vector3.one*.105f, amber);
+                if (wolf)
+                {
+                    Part("Ухо", new Vector3(side*.2f,.32f,-.04f), new Vector3(.18f,.37f,.16f), coat);
+                    foreach (float z in new[]{-.8f,-.05f})
+                        Part("Лапа", new Vector3(side*.24f,-.85f,z), new Vector3(.19f,.8f,.21f), coat);
+                }
+                else Part("Крыло", new Vector3(side*.7f,-.17f,-.35f), new Vector3(1.35f,.18f,.65f), coat);
+            }
+            return actor;
         }
         if (kind == ParkMascot.Kesha)
         {

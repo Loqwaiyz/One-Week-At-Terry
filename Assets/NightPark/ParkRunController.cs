@@ -49,13 +49,14 @@ public sealed class ParkRunController : MonoBehaviour
     private Vector2[] mapPoints;
     private bool overCameraTab;
     private int channel;
-    public int ViewedChannel => liveCamera && night.IsChannelAvailable(channel) && channel != night.BrokenChannel ? channel : -1;
+    public int ViewedChannel => liveCamera && night.IsChannelAvailable(channel) && !night.IsBroken(channel) ? channel : -1;
     public bool IsDirecting { get; private set; }
     public bool TabletOpen => liveCamera;
     public bool MapOpen => mapOpen;
     public int ObjectivePost { get; set; } = -1;
     public int YardPost => Array.FindIndex(posts, p => p.Name == "Мусорка");
     public Transform PostSeat(int index) => posts[index].seat;
+    public int SelectedChannel => liveCamera ? channel : -1;
     private Camera liveCamera;
     private RenderTexture video;
 
@@ -200,6 +201,39 @@ public sealed class ParkRunController : MonoBehaviour
     public Transform CreateMascot(ParkMascot kind)
     {
         return ParkMascots.Create(kind, posts[0].cover.GetComponent<Renderer>().sharedMaterial);
+    }
+
+    public bool PlaceFalcon(Transform actor, int room)
+    {
+        Transform seat = posts[room].seat;
+        // Try both sides at several heights. Stay inside the actual look limits.
+        float side = UnityEngine.Random.value < .5f ? -1 : 1;
+        for (int i = 0; i < 24; i++)
+        {
+            float yawAngle = side * lookAngle * UnityEngine.Random.Range(.65f, 1f);
+            side = -side;
+            float pitchAngle = UnityEngine.Random.Range(-32f, 12f);
+            Vector3 direction = seat.rotation * Quaternion.Euler(pitchAngle, yawAngle, 0) * Vector3.forward;
+            float distance = UnityEngine.Random.Range(3.5f, 8f);
+            if (Physics.SphereCast(seat.position, .16f, direction, out RaycastHit hit, distance,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                distance = hit.distance - 1.1f;
+            if (distance < 1.8f) continue;
+            Vector3 point = seat.position + direction * distance;
+            if (Physics.CheckSphere(point, 1.1f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) continue;
+            actor.SetPositionAndRotation(point, Quaternion.LookRotation(Vector3.ProjectOnPlane(-direction, Vector3.up)));
+            return true;
+        }
+        return false;
+    }
+
+    public void PlaceVisitor(Transform actor, int room, bool wolf)
+    {
+        Transform seat = posts[room].seat;
+        Vector3 forward = Vector3.ProjectOnPlane(seat.forward, Vector3.up).normalized;
+        Vector3 offset = forward * 2.7f + seat.right * (wolf ? -.35f : .55f);
+        actor.SetPositionAndRotation(seat.position + offset + Vector3.up * (wolf ? -.22f : .3f),
+            Quaternion.LookRotation(-forward));
     }
 
     public void PlaceMascot(Transform actor, int room, ParkMascot kind)
@@ -509,7 +543,7 @@ public sealed class ParkRunController : MonoBehaviour
         Matrix4x4 previous = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(Vector3.one * scale);
         Fill(new Rect(0, 0, width, height), new Color32(32, 38, 40, 255));
-        if (!night.IsChannelAvailable(channel) || night.BrokenChannel == channel)
+        if (!night.IsChannelAvailable(channel) || night.IsBroken(channel))
         {
             Fill(new Rect(0, 0, split, height), new Color32(12, 16, 18, 255));
             GUI.Label(new Rect(split / 2 - 160, height / 2 - 36, 360, 80),
