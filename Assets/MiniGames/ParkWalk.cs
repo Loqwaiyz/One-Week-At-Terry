@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace Terry.MiniGames
@@ -34,7 +34,6 @@ namespace Terry.MiniGames
         internal Action OnCompleted { private get; set; }
 
         readonly bool[] watched = new bool[2];
-        readonly string[] names = { "Цирковой шатёр", "Центральный вход", "Логово Черепахи" };
         static readonly Color Ink = new Color32(49, 32, 28, 255);
         static readonly Color Paper = new Color32(255, 226, 171, 255);
         static readonly Color Gold = new Color32(246, 178, 78, 255);
@@ -167,17 +166,19 @@ namespace Terry.MiniGames
             GUI.color = Color.white;
         }
 
-        void Caption(Rect rect, string text, int size, Color color, TextAnchor anchor)
+        void Caption(Rect rect, string text, int size, Color color)
         {
             label.fontSize = size;
-            label.alignment = anchor;
+            label.alignment = TextAnchor.MiddleCenter;
             label.normal.textColor = color;
             GUI.Label(rect, text, label);
         }
 
         void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint || child == null) return;
+            if (Event.current.type != EventType.Repaint || !finished) return;
+            float fade = Fade;
+            if (fade <= 0) return;
             label ??= new GUIStyle(GUI.skin.label) { padding = new RectOffset() };
             GUI.depth = -100;
             Matrix4x4 original = GUI.matrix;
@@ -188,50 +189,15 @@ namespace Terry.MiniGames
             float width = Screen.width / scale;
             float height = Screen.height / scale;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
-            Fill(new Rect(0, 0, width, 55), Ink);
-            Fill(new Rect(0, height - 65, width, 65), Ink);
-            GUI.BeginGroup(new Rect((width - ViewWidth) / 2, 0, ViewWidth, height));
-            DrawTicket(height);
-            GUI.EndGroup();
-            if (finished)
+            Fill(new Rect(0, 0, width, height), new Color(Ink.r, Ink.g, Ink.b, fade));
+            if (fade > 0.92f)
             {
-                float fade = Fade;
-                Fill(new Rect(0, 0, width, height), new Color(Ink.r, Ink.g, Ink.b, fade));
-                if (fade > 0.92f)
-                {
-                    Caption(new Rect(0, height / 2 - 55, width, 64), "Вторая ночь", 44, Paper, TextAnchor.MiddleCenter);
-                    if (OnCompleted == null)
-                        Caption(new Rect(0, height / 2 + 20, width, 40), "Enter   ·   Прогуляться ещё раз", 19, Gold, TextAnchor.MiddleCenter);
-                }
+                Caption(new Rect(0, height / 2 - 55, width, 64), "Вторая ночь", 44, Paper);
+                if (OnCompleted == null)
+                    Caption(new Rect(0, height / 2 + 20, width, 40), "Enter   ·   Прогуляться ещё раз", 19, Gold);
             }
             GUI.matrix = original;
             GUI.color = originalColor;
         }
-
-        void DrawTicket(float height)
-        {
-            float x = child.position.x;
-            int area = x < (tent.bounds.center.x + entrance.bounds.center.x) / 2 ? 0 :
-                       x > (grotto.bounds.center.x + entrance.bounds.center.x) / 2 ? 2 : 1;
-            Caption(new Rect(22, 0, 250, 55), "ПАРК ТЕРРИ   /   ДЕНЬ 1", 17, Gold, TextAnchor.MiddleLeft);
-            Caption(new Rect(280, 0, 440, 55), names[area], 28, Paper, TextAnchor.MiddleCenter);
-            Caption(new Rect(730, 0, 248, 55), $"Выступления    {Count} / 2", 19, Paper, TextAnchor.MiddleRight);
-            string hint = "Посмотри оба выступления";
-            if (finished)
-                hint = "Оба выступления просмотрены";
-            else if (activeShow >= 0)
-                hint = activeShow == 0 ? "Терри жонглирует под аплодисменты!" : "Ларри играет для гостей на гармони!";
-            else if (Count == 1)
-                hint = watched[0] ? "Логово Черепахи   →" : "←   Цирковой шатёр";
-            else if (area == 1)
-                hint = "←   Цирковой шатёр       ·       Логово Черепахи   →";
-            Fill(new Rect(0, height - 65, ViewWidth, 2), Gold);
-            Caption(new Rect(22, height - 60, 300, 54), "Ходьба   A / D   или   ← / →", 18, Gold, TextAnchor.MiddleLeft);
-            Caption(new Rect(315, height - 60, 663, 54), hint, 20, Paper, TextAnchor.MiddleRight);
-            if (activeShow >= 0 && !watched[activeShow])
-                Fill(new Rect(0, height - 65, ViewWidth * Mathf.Clamp01(watchSeconds / WatchTime), 4), Paper);
-        }
     }
 }
-
-
