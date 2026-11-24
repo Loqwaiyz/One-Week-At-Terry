@@ -21,6 +21,7 @@ public sealed class ParkNightShift : MonoBehaviour
     private AudioSource warning, encounterAudio;
     private AudioClip footsteps, scratching, chirp, clank;
     private ParkScareView scare;
+    private ParkDeathScreen deathScreen;
     private ParkMascot killer;
     private int routePost = -1;
     private int heardFailures;
@@ -140,6 +141,7 @@ public sealed class ParkNightShift : MonoBehaviour
         dawn = CreateEffect(Effect.Dawn, 1.8);
         tabletOff = CreateEffect(Effect.TabletOff, .18);
         jumpscare = Resources.Load<AudioClip>("ParkJumpscare");
+        deathScreen = new ParkDeathScreen(gameObject);
         defeat = CreateEffect(Effect.Defeat, 1.1);
         encounterAudio = gameObject.AddComponent<AudioSource>();
         encounterAudio.loop = true;
@@ -511,8 +513,14 @@ public sealed class ParkNightShift : MonoBehaviour
         if (scare != null)
         {
             if (scare.Active) scare.Animate();
-            else ClearScare();
+            else
+            {
+                ClearScare();
+                effects.Stop();
+                deathScreen.BeginSignalLost();
+            }
         }
+        if (lost) deathScreen?.Tick();
         if (briefing || completed) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Input.GetKey(KeyCode.C) && Input.GetKey(KeyCode.D) &&
@@ -609,7 +617,7 @@ public sealed class ParkNightShift : MonoBehaviour
             killer = collision ?? Attacker();
             scare = new ParkScareView(player, killer);
         }
-        if (caught && jumpscare) effects.PlayOneShot(jumpscare, .48f);
+        if (caught && jumpscare) effects.PlayOneShot(jumpscare, .60f);
         else effects.PlayOneShot(caught ? defeat : dawn, .52f);
         completed = true;
         lost = caught;
@@ -664,6 +672,8 @@ public sealed class ParkNightShift : MonoBehaviour
     private void OnDisable()
     {
         ClearScare();
+        deathScreen?.Dispose();
+        deathScreen = null;
         if (background) background.Stop();
         if (effects) effects.Stop();
         if (warning) warning.Stop();
@@ -705,9 +715,27 @@ public sealed class ParkNightShift : MonoBehaviour
             if (!player.enabled) postNight.DrawOverlay();
             return;
         }
-        if (lost && scare != null && scare.Active)
+        if (lost && !selectingNight)
         {
-            scare.Draw(new Rect(0, 0, Screen.width, Screen.height));
+            if (!loading && deathScreen != null && deathScreen.ShowingCarousel &&
+                Event.current.type == EventType.MouseDown)
+            {
+                Event.current.Use();
+                loading = true;
+                ReturnToMenu();
+                return;
+            }
+            int depth = GUI.depth;
+            Matrix4x4 matrix = GUI.matrix;
+            Color color = GUI.color;
+            GUI.depth = -100;
+            GUI.matrix = Matrix4x4.identity;
+            GUI.color = Color.white;
+            if (scare != null) scare.Draw(new Rect(0, 0, Screen.width, Screen.height));
+            else deathScreen?.Draw();
+            GUI.color = color;
+            GUI.matrix = matrix;
+            GUI.depth = depth;
             return;
         }
         int previousDepth = GUI.depth;
