@@ -11,6 +11,7 @@ namespace Terry.MiniGames
         [SerializeField] Renderer tent, entrance, grotto;
         [SerializeField] Transform ball;
         [SerializeField] Transform[] notes;
+        [SerializeField] string nextNightTitle = "Вторая ночь";
         [Header("Прогулка")]
         [SerializeField, Min(0.1f)] float walkSpeed = 3.4f;
         [SerializeField, Min(0.1f)] float watchRadius = 3.4f;
@@ -192,7 +193,7 @@ namespace Terry.MiniGames
             Fill(new Rect(0, 0, width, height), new Color(Ink.r, Ink.g, Ink.b, fade));
             if (fade > 0.92f)
             {
-                Caption(new Rect(0, height / 2 - 55, width, 64), "Вторая ночь", 44, Paper);
+                Caption(new Rect(0, height / 2 - 55, width, 64), nextNightTitle, 44, Paper);
                 if (OnCompleted == null)
                     Caption(new Rect(0, height / 2 + 20, width, 40), "Enter   ·   Прогуляться ещё раз", 19, Gold);
             }
