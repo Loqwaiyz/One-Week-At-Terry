@@ -17,6 +17,16 @@ public sealed class ParkPostNight : MonoBehaviour
     public static bool SegmentCompleted => PlayerPrefs.GetInt(ProgressKey, 0) >= 5;
     public static bool HasUnfinishedSegment => PlayerPrefs.GetInt(ProgressKey, 0) is >= 1 and < 5;
 
+    private bool replay;
+    private int replayCheckpoint;
+    public bool SignalConnected => replay ? replayCheckpoint >= 3 : CameraConnected;
+
+    private void RecordStep(int checkpoint)
+    {
+        if (replay) replayCheckpoint = checkpoint;
+        else Save(checkpoint);
+    }
+
     private ParkRunController player;
     private ParkNightShift night;
     private Transform device;
@@ -39,13 +49,15 @@ public sealed class ParkPostNight : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    public void Begin(ParkRunController controller, ParkNightShift shift)
+    public void Begin(ParkRunController controller, ParkNightShift shift, bool isReplay = false)
     {
         player = controller;
         night = shift;
         yard = player.YardPost;
         Active = true;
-        int checkpoint = PlayerPrefs.GetInt(ProgressKey, 1);
+        replay = isReplay;
+        replayCheckpoint = 1;
+        int checkpoint = replay ? replayCheckpoint : PlayerPrefs.GetInt(ProgressKey, 1);
         CurrentStep = checkpoint >= 4 ? Step.ReturnToEntrance : checkpoint == 3 ? Step.VerifyFeed :
             checkpoint == 2 ? Step.TuneTransmitter : Step.ReachCamera;
         player.ObjectivePost = checkpoint >= 4 ? 0 : yard;
@@ -117,8 +129,8 @@ public sealed class ParkPostNight : MonoBehaviour
     private void UpdateIndicator()
     {
         var properties = new MaterialPropertyBlock();
-        properties.SetColor("_BaseColor", CameraConnected ? Accent : new Color32(252, 191, 103, 255));
-        properties.SetColor("_EmissiveColor", CameraConnected ? Accent * 3 : new Color(1, .5f, .12f) * 2);
+        properties.SetColor("_BaseColor", SignalConnected ? Accent : new Color32(252, 191, 103, 255));
+        properties.SetColor("_EmissiveColor", SignalConnected ? Accent * 3 : new Color(1, .5f, .12f) * 2);
         indicator.SetPropertyBlock(properties);
     }
 
@@ -135,7 +147,7 @@ public sealed class ParkPostNight : MonoBehaviour
             viewedFor = player.ViewedChannel == yard ? viewedFor + Time.unscaledDeltaTime : 0;
             if (viewedFor >= 2)
             {
-                Save(4);
+                RecordStep(4);
                 CurrentStep = Step.ReturnToEntrance;
                 player.ObjectivePost = 0;
             }
@@ -162,7 +174,7 @@ public sealed class ParkPostNight : MonoBehaviour
     private IEnumerator Connect()
     {
         yield return EquipmentShot(2);
-        Save(2);
+        RecordStep(2);
         CurrentStep = Step.TuneTransmitter;
     }
 
@@ -175,7 +187,7 @@ public sealed class ParkPostNight : MonoBehaviour
     private IEnumerator Tune()
     {
         yield return EquipmentShot(3);
-        Save(3);
+        RecordStep(3);
         UpdateIndicator();
         CurrentStep = Step.VerifyFeed;
     }
@@ -199,13 +211,31 @@ public sealed class ParkPostNight : MonoBehaviour
         Transform seat = player.PostSeat(0);
         yield return player.DirectView(seat.position + seat.forward * .4f,
             seat.position + seat.forward * 12, 2);
-        PlayerPrefs.SetInt(ProgressKey, 5);
-        ParkProgress.CompleteFirstPostNight();
+        CompleteSegment();
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void Skip()
+    {
+        if (!Active || Finished) return;
+        StopAllCoroutines();
+        CompleteSegment();
+    }
+#endif
+
+    private void CompleteSegment()
+    {
+        if (!replay)
+        {
+            PlayerPrefs.SetInt(ProgressKey, 5);
+            ParkProgress.CompleteFirstPostNight();
+        }
         CurrentStep = Step.Complete;
         player.ObjectivePost = -1;
         player.enabled = false;
         Busy = false;
-        night.StartPendingWalk();
+        if (replay) ParkNightShift.ReturnToMenu();
+        else night.StartPendingWalk();
     }
 
     private void OnDestroy()

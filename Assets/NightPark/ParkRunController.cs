@@ -57,6 +57,7 @@ public sealed class ParkRunController : MonoBehaviour
     public bool TabletOpen => liveCamera;
     public bool MapOpen => mapOpen;
     public int ObjectivePost { get; set; } = -1;
+    public int CameraCount => posts.Length;
     public int YardPost => Array.FindIndex(posts, p => p.Name == "Мусорка");
     public Transform PostSeat(int index) => posts[index].seat;
     public int SelectedChannel => liveCamera ? channel : -1;
@@ -147,7 +148,9 @@ public sealed class ParkRunController : MonoBehaviour
     public int CurrentPost => current;
     public bool CanRepairHere => !IsRunning && !UsingCover && !liveCamera && !mapOpen;
 
-    public FirstNightRules CreateNight(int number)
+    public int CircusPost => Array.FindIndex(posts, p => p.Name == "Цирковой шатёр");
+
+    public FirstNightRules CreateNight(int number, ParkAnimatronicSettings.Profile custom = null)
     {
         night = GetComponent<ParkNightShift>();
         var exits = new List<int>[posts.Length];
@@ -158,9 +161,11 @@ public sealed class ParkRunController : MonoBehaviour
             exits[route.second].Add(route.first);
         }
         GetComponent<Camera>().cullingMask &= ~(1 << ParkMascots.SurveillanceLayer);
-        return new FirstNightRules(exits, Array.FindIndex(posts, p => p.Name == "Цирковой шатёр"),
+        var config = GetComponent<ParkAnimatronicSettings>();
+        return new FirstNightRules(exits, CircusPost,
             Array.FindIndex(posts, p => p.Name == "Черепашье логово"), new System.Random(), number,
-            night.IsChannelAvailable(YardPost) ? -1 : YardPost);
+            night.IsChannelAvailable(YardPost) ? -1 : YardPost, night.IsChannelAvailable,
+            custom ?? (config && config.useCustomSettings ? config.custom : null));
     }
 
     public void PreparePostNight()
@@ -581,14 +586,14 @@ public sealed class ParkRunController : MonoBehaviour
         {
             Fill(new Rect(0, 0, split, height), new Color32(12, 16, 18, 255));
             GUI.Label(new Rect(split / 2 - 160, height / 2 - 36, 360, 80),
-                    night.IsChannelAvailable(channel) ? "Нет сигнала" : "Камера не подключена\nПередатчик у хозяйственного двора", hintStyle);
+                    night.IsChannelAvailable(channel) ? "Нет сигнала" : channel != YardPost ? "Камера не установлена" : "Камера не подключена\nПередатчик у хозяйственного двора", hintStyle);
         }
         else GUI.DrawTexture(new Rect(0, 0, split, height), video, ScaleMode.ScaleToFit, false);
         Fill(new Rect(0, 0, split, 48), new Color32(17, 24, 25, 220));
         GUI.Label(new Rect(220, 6, split - 238, 36), $"КАМ {channel + 1:00}  ·  {posts[channel].Name}", titleStyle);
         GUI.Label(new Rect(split + 16, 17, width - split - 32, 35), "Камеры парка", titleStyle);
         if (night)
-            GUI.Label(new Rect(split + 16, 55, width - split - 32, 28), night.IsPostNight ? "После первой ночи · 06:00" : $"Ночь {night.Number} · {night.Hour:00} ч", hintStyle);
+            GUI.Label(new Rect(split + 16, 55, width - split - 32, 28), night.IsPostNight ? "После первой ночи · 06:00" : night.IsCustom ? $"Custom Night · {night.Hour:00} ч" : $"Ночь {night.Number} · {night.Hour:00} ч", hintStyle);
 
         Rect chart = new Rect(split + 16, 92, width - split - 32, height - 184);
         DrawCameraChart(chart);

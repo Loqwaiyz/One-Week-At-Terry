@@ -30,7 +30,12 @@ public sealed class ParkNightShift : MonoBehaviour
     private FirstNightRules.Visitor shownVisitor;
     private int shownRoom = -1;
     private const int MaxCharges = 15;
-    private const double Duration = 420.0;
+    private const double InstallationSeconds = 5;
+    private int installationPost = -1;
+    private double installationEnds;
+    private readonly System.Collections.Generic.HashSet<int> installed = new();
+    private double Duration => Number == 1 ? 350.0 : 420.0;
+    private bool missedInstallations;
     private const double FlashDuration = 1.0;
 
     private Light beam;
@@ -42,7 +47,7 @@ public sealed class ParkNightShift : MonoBehaviour
     private bool briefing;
     private GUIStyle briefingText;
     private static readonly string[] Briefings = {
-        "Терри виден на камерах. Перед перебежкой проверь, свободна ли локация. Услышишь тяжёлые шаги рядом — открой карту и беги в соседнюю локацию.\n\nМеталлический лязг означает, что Ларри сломал камеру. Дождись его ухода, доберись до этой локации и почини камеру.",
+        "Смена с часу до шести утра. Работают камеры у входа и в цирке. До рассвета установи камеры во всех остальных локациях. Оставайся на месте, пока идёт монтаж. Передатчик у хоздвора подключишь после смены.\n\nТерри виден на камерах. Перед перебежкой проверь, свободна ли локация. Услышишь тяжёлые шаги рядом — открой карту и беги в соседнюю локацию.\n\nМеталлический лязг означает, что Ларри сломал камеру. Дождись его ухода, доберись до этой локации и почини камеру.",
         "Уми выдаёт прерывистый шорох. Когда он станет громче, закрой планшет и нажми «Спрятаться». Оставайся в укрытии, пока шорох не стихнет.",
         "Кешу выдаёт свист. Переключай камеры и прислушивайся: на его канале свист громче. Смотри на Кешу, пока он не уйдёт. Если камера потеряла сигнал, сначала почини её.",
         null,
@@ -52,20 +57,35 @@ public sealed class ParkNightShift : MonoBehaviour
     };
     private bool completed, lost, selectingNight, loading;
     private FirstNightRules rules;
+    private static ParkAnimatronicSettings.Profile pendingCustom;
+    private ParkAnimatronicSettings.Profile custom;
+    public bool IsCustom => custom != null;
     private static int nextNight = 1;
     public int Number { get; private set; } = 1;
     private Transform terry, larry, umi, kesha;
     private ParkPostNight postNight;
     public bool IsPostNight => postNight && postNight.Active;
-    public bool IsChannelAvailable(int index) => index != GetComponent<ParkRunController>().YardPost ||
-        ((IsPostNight || Number > 1) && ParkPostNight.CameraConnected);
+    public bool IsChannelAvailable(int index) => index != GetComponent<ParkRunController>().YardPost ?
+        (Number != 1 || IsPostNight || installed.Contains(index)) :
+        (IsPostNight ? postNight.SignalConnected : Number > 1 && ParkPostNight.CameraConnected);
 
     public void DrawPostNightOverlay() => postNight.DrawOverlay();
     private int keshaPost = -1;
     private int umiPost = -1;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSelection() => nextNight = 1;
+    private static void ResetSelection()
+    {
+        nextNight = 1;
+        pendingCustom = null;
+    }
+
+    public static void StartCustomNight(ParkAnimatronicSettings.Profile profile)
+    {
+        if (ParkProgress.CompletedNight < 7) return;
+        pendingCustom = profile;
+        StartFromMenu(LastNight);
+    }
 
     public static void StartFromMenu(int number)
     {
@@ -106,16 +126,21 @@ public sealed class ParkNightShift : MonoBehaviour
         player = GetComponent<ParkRunController>();
         Number = nextNight;
         nextNight = 1;
-        ParkProgress.RecordStarted(Number);
-        rules = player.CreateNight(Number);
-        terry = player.CreateMascot(ParkMascot.Terry);
-        larry = player.CreateMascot(ParkMascot.Larry);
-        if (Number >= 2)
+        custom = pendingCustom;
+        pendingCustom = null;
+        if (!IsCustom) ParkProgress.RecordStarted(Number);
+        Hour = Number == 1 ? 1 : 0;
+        rules = player.CreateNight(Number, custom);
+        installed.Add(player.CurrentPost);
+        installed.Add(player.CircusPost);
+        if (rules.Settings.terry) terry = player.CreateMascot(ParkMascot.Terry);
+        if (rules.Settings.larry) larry = player.CreateMascot(ParkMascot.Larry);
+        if (rules.Settings.umi)
         {
             umi = player.CreateMascot(ParkMascot.Umi);
             umi.gameObject.SetActive(false);
         }
-        if (Number >= 3)
+        if (rules.Settings.kesha)
         {
             kesha = player.CreateMascot(ParkMascot.Kesha);
             kesha.gameObject.SetActive(false);
@@ -149,13 +174,13 @@ public sealed class ParkNightShift : MonoBehaviour
         scratching = CreateCue(ParkMascot.Umi);
         chirp = CreateCue(ParkMascot.Kesha);
         clank = CreateCue(ParkMascot.Larry);
-        if (Number >= 5)
+        if (rules.Settings.HasVisitors)
         {
             falcon = player.CreateMascot(ParkMascot.Falcon);
             wolf = player.CreateMascot(ParkMascot.Wolf);
             falcon.gameObject.SetActive(false);
             wolf.gameObject.SetActive(false);
-            if (Number == 7)
+            if (rules.Settings.elephant)
             {
                 elephant = player.CreateMascot(ParkMascot.Elephant);
                 elephant.gameObject.SetActive(false);
@@ -186,7 +211,7 @@ public sealed class ParkNightShift : MonoBehaviour
         beam.shadows = LightShadows.Soft;
         beam.enabled = false;
         if (Number == 1 && ParkPostNight.HasUnfinishedSegment) BeginPostNight();
-        else if (Briefings[Number - 1] != null)
+        else if (!IsCustom && Briefings[Number - 1] != null)
         {
             briefing = true;
             player.enabled = false;
@@ -521,19 +546,30 @@ public sealed class ParkNightShift : MonoBehaviour
             }
         }
         if (lost) deathScreen?.Tick();
-        if (briefing || completed) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (Input.GetKey(KeyCode.C) && Input.GetKey(KeyCode.D) &&
+        if ((IsPostNight || (!briefing && !completed)) && Input.GetKey(KeyCode.C) && Input.GetKey(KeyCode.D) &&
             (Input.GetKeyDown(KeyCode.KeypadPlus) || Input.GetKeyDown(KeyCode.Plus) ||
              Input.GetKeyDown(KeyCode.Equals))) // Main keyboard +/= key, with or without Shift.
         {
-            FinishNight(false);
+            if (IsPostNight) postNight.Skip();
+            else FinishNight(false, debugSkip: true);
             return;
         }
 #endif
+        if (briefing || completed) return;
         double now = Time.unscaledTimeAsDouble;
         double elapsed = now - startTime;
-        Hour = (int)(Math.Min(elapsed, Duration) / (Duration / 6));
+        Hour = (Number == 1 ? 1 : 0) + (int)(Math.Min(elapsed, Duration) / 70);
+        if (installationPost >= 0)
+        {
+            if (!player.CanRepairHere || player.CurrentPost != installationPost)
+                installationPost = -1;
+            else if (Math.Min(elapsed, Duration) >= installationEnds)
+            {
+                installed.Add(installationPost);
+                installationPost = -1;
+            }
+        }
         rules.Tick(Math.Min(elapsed, Duration), player.CurrentPost, player.IsRunning, player.CanRepairHere, player.IsHidden, player.ViewedChannel);
         if (terryPost != rules.Terry) player.PlaceMascot(terry, terryPost = rules.Terry, ParkMascot.Terry);
         if (larryPost != rules.Larry) player.PlaceMascot(larry, larryPost = rules.Larry, ParkMascot.Larry);
@@ -560,13 +596,13 @@ public sealed class ParkNightShift : MonoBehaviour
         }
 
         UpdateBackground(elapsed);
-        if (player.UsingCover)
+        if (player.TabletOpen || player.UsingCover)
         {
             flashEnds = 0;
             SetFlashlight(false);
             return;
         }
-        if (charges > 0 && Input.GetMouseButtonDown(1))
+        if (now >= flashEnds && charges > 0 && Input.GetMouseButtonDown(1))
         {
             charges--;
             flashEnds = now + FlashDuration;
@@ -605,7 +641,7 @@ public sealed class ParkNightShift : MonoBehaviour
         return rules.CaughtByUmi ? ParkMascot.Umi : ParkMascot.Terry;
     }
 
-    private void FinishNight(bool caught, ParkMascot? collision = null)
+    private void FinishNight(bool caught, ParkMascot? collision = null, bool debugSkip = false)
     {
         background.Stop();
         if (warning) warning.Stop();
@@ -620,12 +656,13 @@ public sealed class ParkNightShift : MonoBehaviour
         if (caught && jumpscare) effects.PlayOneShot(jumpscare, .60f);
         else effects.PlayOneShot(caught ? defeat : dawn, .52f);
         completed = true;
-        lost = caught;
+        missedInstallations = !caught && !debugSkip && Number == 1 && installed.Count < player.CameraCount;
+        lost = caught || missedInstallations;
         if (!caught) Hour = 6;
         beam.enabled = false;
         player.enabled = false;
-        if (!caught) ParkProgress.RecordVictory(Number);
-        if (!caught && Number == 1) ParkPostNight.MarkPending();
+        if (!lost && !IsCustom) ParkProgress.RecordVictory(Number);
+        if (!lost && Number == 1) ParkPostNight.MarkPending();
     }
 
     public void BeginPostNight()
@@ -715,7 +752,7 @@ public sealed class ParkNightShift : MonoBehaviour
             if (!player.enabled) postNight.DrawOverlay();
             return;
         }
-        if (lost && !selectingNight)
+        if (lost && !missedInstallations && !selectingNight)
         {
             if (!loading && deathScreen != null && deathScreen.ShowingCarousel &&
                 Event.current.type == EventType.MouseDown)
@@ -772,9 +809,17 @@ public sealed class ParkNightShift : MonoBehaviour
             }
             else
             {
-                GUI.Label(new Rect(0, height / 2 - 85, width, 95), lost ? (killer switch { ParkMascot.Elephant => "Год нашёл тебя", ParkMascot.Wolf => "Клык догнал тебя", ParkMascot.Falcon => "Савелий настиг тебя", ParkMascot.Kesha => "Кеша поймал тебя", ParkMascot.Umi => "Уми нашла тебя", _ => "Терри поймал тебя" }) : "6 утра", victoryTime);
-                GUI.Label(new Rect(0, height / 2 + 10, width, 60), lost ? $"Ночь {Number} не пройдена" : Number == LastNight ? "Ты пережил все семь ночей!" : $"Победа! Ночь {Number} пройдена", victoryTitle);
-                if (lost)
+                GUI.Label(new Rect(0, height / 2 - 85, width, 95), missedInstallations ? "Камеры не установлены" : lost ? (killer switch { ParkMascot.Elephant => "Год нашёл тебя", ParkMascot.Wolf => "Клык догнал тебя", ParkMascot.Falcon => "Савелий настиг тебя", ParkMascot.Kesha => "Кеша поймал тебя", ParkMascot.Umi => "Уми нашла тебя", _ => "Терри поймал тебя" }) : "6 утра", victoryTime);
+                GUI.Label(new Rect(0, height / 2 + 10, width, 60), lost ? $"Ночь {Number} не пройдена" : IsCustom ? "Custom Night пройдена!" : Number == LastNight ? "Ты пережил все семь ночей!" : $"Победа! Ночь {Number} пройдена", victoryTitle);
+                if (IsCustom)
+                {
+                    if (!loading && GUI.Button(new Rect(width / 2 - 110, height / 2 + 88, 220, 48), "Сыграть ещё раз"))
+                    {
+                        loading = true;
+                        StartCustomNight(custom);
+                    }
+                }
+                else if (lost)
                 {
                     if (GUI.Button(new Rect(width / 2 - 230, height / 2 + 88, 220, 48), "Дальше"))
                         selectingNight = true;
@@ -794,7 +839,20 @@ public sealed class ParkNightShift : MonoBehaviour
         else
         {
             float centre = Screen.width / scale / 2;
-            if (rules != null && player.CanRepairHere && rules.CanRepair(player.CurrentPost))
+            if (Number == 1)
+                GUI.Box(new Rect(10, 44, 200, 32), $"Установлено камер: {installed.Count}/{player.CameraCount}");
+            if (Number == 1 && player.CanRepairHere && !installed.Contains(player.CurrentPost))
+            {
+                Rect action = new Rect(centre - 110, Screen.height / scale - 100, 220, 36);
+                if (installationPost >= 0)
+                    GUI.Box(action, $"Монтаж · {Math.Max(0, installationEnds - NightTime):0.0} с");
+                else if (GUI.Button(action, "Установить камеру · 5 с"))
+                {
+                    installationPost = player.CurrentPost;
+                    installationEnds = NightTime + InstallationSeconds;
+                }
+            }
+            else if (rules != null && player.CanRepairHere && rules.CanRepair(player.CurrentPost))
             {
                 Rect repair = new Rect(centre - 110, Screen.height / scale - 100, 220, 36);
                 if (rules.Repairing) GUI.Box(repair, $"Ремонт · {rules.RepairRemaining(NightTime):0.0} с");

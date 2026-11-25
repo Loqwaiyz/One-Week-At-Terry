@@ -6,7 +6,7 @@ using UnityEngine.Rendering.HighDefinition;
 [RequireComponent(typeof(Camera))]
 public sealed class ParkMainMenu : MonoBehaviour
 {
-    public enum Page { Home, Settings, Extra, ConfirmNewGame }
+    public enum Page { Home, Settings, Extra, CustomNight, ConfirmNewGame }
     [SerializeField] private Material mascotMaterial;
     [SerializeField] private Vector3 mascotPosition = new Vector3(6, 0, -54);
     public Page CurrentPage { get; private set; }
@@ -63,9 +63,9 @@ public sealed class ParkMainMenu : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         ParkOptions.Apply();
         // One roll per menu scene, including returns from a night.
-        int roll = Random.Range(0, 600);
-        if (roll < SecretCaptions.Length) homeCaption = SecretCaptions[roll];
-        else if (roll == SecretCaptions.Length)
+        int roll = Random.Range(0, 100);
+        if (roll < 9) homeCaption = SecretCaptions[Random.Range(0, SecretCaptions.Length)];
+        else if (roll == 9)
         {
             missingTerry = true;
             homeCaption = "ОШИБКА 404: ОБЪЕКТ «ТЕРРИ» НЕ НАЙДЕН";
@@ -367,6 +367,7 @@ public sealed class ParkMainMenu : MonoBehaviour
         if (CurrentPage == Page.Home) DrawHome(height);
         else if (CurrentPage == Page.Settings) DrawSettings();
         else if (CurrentPage == Page.Extra) DrawExtra();
+        else if (CurrentPage == Page.CustomNight) DrawCustomNight();
         else DrawNewGameConfirmation();
         GUI.Label(new Rect(72, height - 42, 620, 26), CurrentPage == Page.Home ?
             "↑ ↓  выбор     ENTER  подтвердить" : CurrentPage == Page.Extra ?
@@ -412,6 +413,28 @@ public sealed class ParkMainMenu : MonoBehaviour
         if (Row(new Rect(72, 512, 355, 44), "‹  Назад")) OpenPage(Page.Home);
     }
 
+    private readonly int[] levels = { 1, 1, 0, 0, 0, 0, 0 };
+
+    private void DrawCustomNight()
+    {
+        GUI.Label(new Rect(72, 85, 540, 55), "CUSTOM NIGHT", panelTitle);
+        GUI.Label(new Rect(76, 150, 570, 36), "Выбери активность каждого противника. 0 — выключен.", body);
+        for (int i = 0; i < Names.Length; i++)
+        {
+            float y = 202 + i * 42;
+            GUI.Label(new Rect(76, y, 210, 38), Names[i], body);
+            if (Row(new Rect(300, y, 62, 38), "−", levels[i] > 0)) levels[i]--;
+            GUI.Label(new Rect(381, y, 64, 38), levels[i].ToString(), body);
+            if (Row(new Rect(443, y, 62, 38), "+", levels[i] < 20)) levels[i]++;
+        }
+        if (!Loading && Row(new Rect(72, 524, 340, 44), "Начать ночь"))
+        {
+            Loading = true;
+            ParkNightShift.StartCustomNight(ParkAnimatronicSettings.Profile.FromLevels(levels));
+        }
+        if (Row(new Rect(435, 524, 355, 44), "‹  Экстра")) OpenPage(Page.Extra);
+    }
+
     private void DrawExtra()
     {
         GUI.Label(new Rect(72, 105, 500, 50), "ЭКСТРА / МАСКОТЫ", panelTitle);
@@ -423,6 +446,8 @@ public sealed class ParkMainMenu : MonoBehaviour
         if (Row(new Rect(72, 414, 175, 44), "‹  Назад")) SelectExtra(-1);
         if (Row(new Rect(258, 414, 175, 44), "Вперёд  ›")) SelectExtra(1);
         GUI.Label(new Rect(91, 472, 355, 28), $"ЗАПИСЬ {extraIndex + 1:00} / 07", small);
+        if (!Loading && ParkProgress.CompletedNight >= 7 &&
+            Row(new Rect(435, 524, 355, 44), "Custom Night")) OpenPage(Page.CustomNight);
         if (Row(new Rect(72, 524, 355, 44), "‹  Главное меню")) OpenPage(Page.Home);
     }
 

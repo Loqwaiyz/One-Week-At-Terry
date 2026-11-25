@@ -22,16 +22,16 @@ public sealed class FirstNightRules
     public bool WolfStunned { get; private set; }
     public double IntruderDeadline { get; private set; }
     private double nextVisit = 30;
-    private bool Hard => night >= 4;
+    public ParkAnimatronicSettings.Profile Settings { get; }
+    private readonly List<Visitor> visitors = new();
     public int Failures { get; private set; }
     private int guarded = -1, repairRoom = -1;
     private double nextTerry = 24, nextLarry = 48, leaveAt, repairAt = -1;
-    private readonly int night;
+    private readonly Func<int, bool> available;
     private readonly int inactiveCamera;
     private double nextKesha = 100, watchingSince = -1;
     public int Kesha { get; private set; } = -1;
     private double searchDeadline;
-    public const int KeshaSearchSeconds = 20, KeshaWatchSeconds = 4;
     public double KeshaDeadline { get; private set; }
     public bool CaughtByKesha { get; private set; }
     private double nextUmi = 65;
@@ -46,15 +46,23 @@ public sealed class FirstNightRules
     public bool Caught { get; private set; }
     public bool Repairing => repairAt >= 0;
 
-    public FirstNightRules(List<int>[] exits, int circus, int den, Random random, int night = 1, int inactiveCamera = -1)
+    public FirstNightRules(List<int>[] exits, int circus, int den, Random random, int night = 1, int inactiveCamera = -1, Func<int, bool> available = null, ParkAnimatronicSettings.Profile settings = null)
     {
         this.exits = exits;
         this.random = random;
-        this.night = night;
+        Settings = settings ?? ParkAnimatronicSettings.Profile.Story(night);
         this.inactiveCamera = inactiveCamera;
-        if (Hard) { nextTerry = 17; nextLarry = 35; nextUmi = 52; nextKesha = 80; }
-        Terry = circus;
-        Larry = den;
+        this.available = available;
+        nextTerry = Settings.terryStart;
+        nextLarry = Settings.larryStart;
+        nextUmi = Settings.umiStart;
+        nextKesha = Settings.keshaStart;
+        nextVisit = Settings.visitStart;
+        if (Settings.wolf) visitors.Add(Visitor.Wolf);
+        if (Settings.elephant) visitors.Add(Visitor.Elephant);
+        if (Settings.falcon) visitors.Add(Visitor.Falcon);
+        Terry = Settings.terry ? circus : -1;
+        Larry = Settings.larry ? den : -1;
     }
 
     private int NextToward(int start, int goal)
@@ -121,7 +129,7 @@ public sealed class FirstNightRules
             if (Caught) return;
             Umi = -1;
             UmiAttackAt = -1;
-            nextUmi = time + (Hard ? random.Next(45, 61) : random.Next(60, 81));
+            nextUmi = time + random.Next(Settings.umiIntervalMin, Math.Max(Settings.umiIntervalMin, Settings.umiIntervalMax) + 1);
             nextTerry = Math.Max(nextTerry, time + 6);
         }
         if (time < nextUmi || running || Terry == room || AttackAt >= 0) return;
@@ -129,12 +137,12 @@ public sealed class FirstNightRules
         {
             var neighbours = exits[room];
             Umi = neighbours[random.Next(neighbours.Count)];
-            nextUmi = time + (Hard ? 7 : 9);
+            nextUmi = time + Settings.umiApproach;
         }
         else
         {
             Umi = room;
-            UmiAttackAt = nextUmi = time + (Hard ? 5 : 7);
+            UmiAttackAt = nextUmi = time + Settings.umiReaction;
         }
     }
 
@@ -147,13 +155,13 @@ public sealed class FirstNightRules
             for (int i = 0; i < exits.Length; i++)
             {
                 // At four outages, allow a dead feed only at the player's current repair site.
-                if (i != inactiveCamera && (!IsBroken(i) || (damaged.Count >= 4 && CanRepair(i) && i == room)))
+                if (i != inactiveCamera && available?.Invoke(i) != false && (!IsBroken(i) || (damaged.Count >= Settings.outagesForBrokenFeed && CanRepair(i) && i == room)))
                     channels.Add(i);
             }
             if (channels.Count == 0) return;
-            if (Hard && channels.Count > 1) channels.Remove(feed);
+            if (Settings.avoidViewedCamera && channels.Count > 1) channels.Remove(feed);
             Kesha = channels[random.Next(channels.Count)];
-            searchDeadline = KeshaDeadline = time + KeshaSearchSeconds;
+            searchDeadline = KeshaDeadline = time + Settings.searchSeconds;
         }
         if (room == Terry && !running)
         {
@@ -163,7 +171,7 @@ public sealed class FirstNightRules
         }
         if (feed != Kesha || IsBroken(Kesha)) watchingSince = -1;
         else if (watchingSince < 0 && time <= searchDeadline) watchingSince = time;
-        if (watchingSince >= 0 && time >= watchingSince + KeshaWatchSeconds)
+        if (watchingSince >= 0 && time >= watchingSince + Settings.watchSeconds)
         {
             EndKesha(time);
             return;
@@ -179,7 +187,7 @@ public sealed class FirstNightRules
     {
         Kesha = -1;
         watchingSince = -1;
-        nextKesha = time + (night >= 6 ? 55 : Hard ? 62 : 85);
+        nextKesha = time + Settings.keshaInterval;
         nextTerry = Math.Max(nextTerry, time + 7);
         nextUmi = Math.Max(nextUmi, time + 7);
     }
@@ -195,7 +203,7 @@ public sealed class FirstNightRules
         else
         {
             WolfStunned = true;
-            IntruderDeadline = time + 24;
+            IntruderDeadline = time + Settings.wolfEscape;
         }
     }
 
@@ -210,7 +218,7 @@ public sealed class FirstNightRules
         WolfStunned = false;
         ElephantChannel = -1;
         hiddenSince = -1;
-        nextVisit = time + (night >= 6 ? 39 : 50);
+        nextVisit = time + Settings.visitInterval;
         nextTerry = Math.Max(nextTerry, time + 5);
     }
 
@@ -229,7 +237,7 @@ public sealed class FirstNightRules
         Approaching = kind;
         ApproachRoom = starts[random.Next(starts.Count)];
         approachTarget = target;
-        nextApproachStep = time + 7;
+        nextApproachStep = time + Settings.approachStep;
         return true;
     }
 
@@ -238,12 +246,12 @@ public sealed class FirstNightRules
         if (time < nextApproachStep) return;
         int previous = ApproachRoom;
         if (previous != approachTarget) ApproachRoom = NextToward(previous, approachTarget);
-        nextApproachStep = time + 7;
+        nextApproachStep = time + Settings.approachStep;
         if (!running && room == ApproachRoom)
         {
             Intruder = Approaching;
             IntruderRoom = room;
-            IntruderDeadline = time + (Intruder == Visitor.Wolf ? 9 : 7);
+            IntruderDeadline = time + (Intruder == Visitor.Wolf ? Settings.wolfReaction : Settings.falconReaction);
         }
         else if (ApproachRoom != approachTarget || previous != approachTarget) return; // Briefly search the empty target.
         Approaching = Visitor.None;
@@ -261,12 +269,11 @@ public sealed class FirstNightRules
         if (Intruder == Visitor.None)
         {
             if (time < nextVisit || running || Terry == room || AttackAt >= 0 || Kesha >= 0 || Umi >= 0) return;
-            Visitor next = night < 7 ? Visitor.Falcon : (visits % 3 == 0 ? Visitor.Wolf :
-                visits % 3 == 1 ? Visitor.Elephant : Visitor.Falcon);
+            Visitor next = visitors[visits % visitors.Count];
             if (next != Visitor.Elephant)
             {
                 if (StartApproach(next, room, time)) visits++;
-                else nextVisit = time + 7;
+                else nextVisit = time + Settings.approachStep;
                 return;
             }
             Intruder = next;
@@ -283,13 +290,13 @@ public sealed class FirstNightRules
                 }
             }
             IntruderRoom = room;
-            IntruderDeadline = time + (Intruder == Visitor.Elephant ? 18 : Intruder == Visitor.Wolf ? 9 : 7);
+            IntruderDeadline = time + (Intruder == Visitor.Elephant ? Settings.elephantReaction : Intruder == Visitor.Wolf ? Settings.wolfReaction : Settings.falconReaction);
         }
         if (Intruder == Visitor.Elephant && Response == ElephantResponse.Hide)
         {
             if (!hidden) hiddenSince = -1;
             else if (hiddenSince < 0) hiddenSince = time;
-            if (time >= IntruderDeadline && hiddenSince >= 0 && hiddenSince + 3 <= IntruderDeadline)
+            if (time >= IntruderDeadline && hiddenSince >= 0 && hiddenSince + Settings.elephantHide <= IntruderDeadline)
             {
                 EndVisit(time);
                 return;
@@ -303,7 +310,7 @@ public sealed class FirstNightRules
             bool searchesCover = !IsBroken(room) && random.Next(2) == 0;
             Response = searchesCover ? ElephantResponse.Hide : ElephantResponse.Flash;
             ElephantChannel = searchesCover ? room : -1;
-            IntruderDeadline = time + 9;
+            IntruderDeadline = time + Settings.elephantFollowup;
         }
         else if (WolfStunned && !running && room != IntruderRoom && !exits[IntruderRoom].Contains(room))
             EndVisit(time);
@@ -314,18 +321,18 @@ public sealed class FirstNightRules
         if (Caught) return;
         if (!running && AttackAt >= 0 && time >= AttackAt) { Caught = true; return; }
         if (running) Depart();
-        if (night >= 5) TickVisit(time, room, running, hidden);
+        if (visitors.Count > 0) TickVisit(time, room, running, hidden);
         if (Caught) return;
-        if (Approaching == Visitor.None && Intruder == Visitor.None && night >= 3) TickKesha(time, room, running, hidden, feed);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && Settings.kesha) TickKesha(time, room, running, hidden, feed);
         if (Caught) return;
-        if (Approaching == Visitor.None && Intruder == Visitor.None && night >= 2 && Kesha < 0) TickUmi(time, room, running, hidden);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && Settings.umi && Kesha < 0) TickUmi(time, room, running, hidden);
         if (Caught) return;
-        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Kesha < 0 && Umi < 0 && Terry != room && time >= nextTerry)
+        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Kesha < 0 && Umi < 0 && Settings.terry && Terry != room && time >= nextTerry)
         {
             Terry = NextToward(Terry, room);
-            nextTerry = time + (night >= 6 ? random.Next(9, 15) : Hard ? random.Next(11, 17) : random.Next(16, 22));
+            nextTerry = time + random.Next(Settings.terryStepMin, Math.Max(Settings.terryStepMin, Settings.terryStepMax) + 1);
         }
-        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Terry == room && AttackAt < 0) AttackAt = time + (Hard ? 4.5 : 6);
+        if (Approaching == Visitor.None && Intruder == Visitor.None && !running && Terry == room && AttackAt < 0) AttackAt = time + Settings.terryReaction;
 
         if (guarded >= 0 && time >= leaveAt)
         {
@@ -335,23 +342,23 @@ public sealed class FirstNightRules
         }
         if (!canRepair || room != repairRoom || !CanRepair(room)) repairAt = -1;
         if (Repairing && time >= repairAt) { damaged.Remove(room); repairAt = -1; }
-        if (ElephantChannel >= 0 || Kesha >= 0 || Failures >= (night >= 6 ? 6 : Hard ? 5 : night >= 3 ? 4 : 3) || time < nextLarry) return;
+        if (ElephantChannel >= 0 || Kesha >= 0 || !Settings.larry || Failures >= Settings.sabotageLimit || time < nextLarry) return;
         var choices = exits[Larry].FindAll(n => !damaged.Contains(n));
-        if (Hard && choices.Contains(feed)) Larry = feed;
+        if (Settings.targetViewedCamera && choices.Contains(feed)) Larry = feed;
         else if (choices.Count > 0) Larry = choices[random.Next(choices.Count)];
         else if (damaged.Contains(Larry))
         {
             // Walk through previously visited rooms to reach a fresh camera.
             Larry = exits[Larry][random.Next(exits[Larry].Count)];
-            nextLarry = time + 8;
+            nextLarry = time + Settings.retrySeconds;
             return;
         }
         // An unpaired camera has no live signal for Larry to disrupt.
-        if (Larry == inactiveCamera) { nextLarry = time + 8; return; }
+        if (Larry == inactiveCamera || available?.Invoke(Larry) == false) { nextLarry = time + Settings.retrySeconds; return; }
         guarded = Larry;
         damaged.Add(Larry);
         Failures++;
-        leaveAt = time + 7;
-        nextLarry = time + (night >= 6 ? 70 : Hard ? 80 : 115);
+        leaveAt = time + Settings.guardSeconds;
+        nextLarry = time + Settings.sabotageInterval;
     }
 }
